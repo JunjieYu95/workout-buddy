@@ -1,167 +1,247 @@
 # 🏋️‍♂️ Workout Buddy
 
-A partner accountability app for fitness consistency. Gamify your fitness journey through mutual verification and visual progress tracking!
+**Partner accountability for fitness consistency**
 
-## 🌟 Features
+A gamified workout tracking app where couples/partners encourage and monitor each other's fitness progress through mutual verification and visual progress tracking.
 
-- **👥 Partner Accountability**: Connect with a workout buddy who verifies your workouts
-- **✅ Request-Approval System**: No self-reporting - partners must approve each workout
+## ✨ Features
+
+### 🎯 Core MVP Features
+- **🤝 Partnership System**: Connect with a workout buddy for mutual accountability
+- **📅 Visual Calendar**: Dual-sided daily view showing both partners' workout intensity
 - **🪨 Stone Game**: Gamified progress with stochastic rewards and escalating penalties
-- **📅 Calendar View**: Visual tracking of daily progress with intensity levels (coming soon)
-- **🔥 Streak Tracking**: Build consecutive days and earn bonus rewards
+- **✅ Request-Approval System**: Partners verify each other's workouts (no self-reporting)
+- **🎮 Demo Mode**: Test all features without authentication setup
+- **📊 Progress Tracking**: Visual comparison of both partners' consistency
+
+### 🛠 Technical Features
+- **⚡ Next.js 15**: Latest React framework with App Router
+- **🎨 Tailwind CSS**: Modern, responsive UI design
+- **🔐 Supabase**: Authentication and real-time database
+- **📱 Responsive**: Works on desktop, tablet, and mobile
+- **🚀 Vercel Ready**: Optimized for production deployment
 
 ## 🚀 Quick Start
 
-### 1. Install Dependencies
-
+### Option 1: Automated Setup (Recommended)
 ```bash
-npm install
+./setup-production.sh
 ```
+This script will guide you through the entire deployment process automatically.
 
-### 2. Set Up Supabase
+### Option 2: Manual Setup
+Follow the step-by-step guides:
+- [DEPLOYMENT.md](DEPLOYMENT.md) - Complete deployment guide
+- [CLI_COMMANDS.md](CLI_COMMANDS.md) - CLI commands reference
+- [SETUP.md](SETUP.md) - Local development setup
 
-1. Create a new project at [supabase.com](https://supabase.com)
-2. Go to **Settings > API** and copy your credentials
-3. Run the SQL schema in your Supabase SQL Editor:
+## 📋 Prerequisites
 
-```bash
-# Copy the contents of supabase/schema.sql
-# Paste and run it in your Supabase SQL Editor
-```
+- Node.js 18+ 
+- npm or yarn
+- Git
+- GitHub account
+- Supabase account
+- Vercel account
 
-### 3. Configure Environment Variables
+## 🛠 Tech Stack
 
-```bash
-# Copy the example file
-cp env.example .env.local
+| Category | Technology |
+|----------|------------|
+| **Frontend** | Next.js 15, React 19, Tailwind CSS |
+| **Backend** | Supabase (PostgreSQL, Auth, Real-time) |
+| **Deployment** | Vercel |
+| **Language** | TypeScript |
+| **Styling** | Tailwind CSS |
+| **Icons** | Lucide React |
+| **Date Handling** | date-fns |
 
-# Edit .env.local and add your Supabase credentials:
-NEXT_PUBLIC_SUPABASE_URL=your_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-```
-
-### 4. Run the Development Server
-
-```bash
-npm run dev
-```
-
-Visit [http://localhost:3000](http://localhost:3000) to see your app!
-
-## 📖 How to Use
-
-### Step 1: Sign Up
-- Create an account with your email and password
-- Verify your email (check spam folder)
-
-### Step 2: Connect with Partner
-- Go to Dashboard
-- Enter your partner's email address
-- They must also sign up first
-
-### Step 3: Log Workouts
-- Click "Request Workout Approval"
-- Set intensity (1-5)
-- Add optional notes
-- Send request to partner
-
-### Step 4: Approve Partner's Workouts
-- Click "Approvals" in the header
-- Review your partner's workout requests
-- Approve or reject each request
-- Watch the Stone Game progress!
-
-## 🎮 Stone Game Mechanics
-
-### Rewards
-- **Base Reward**: 5-15 units (random)
-- **Consistency Bonus**: +1 per consecutive day (max +10)
-- **Momentum Multiplier**: Increases with progress (1.0x - 2.0x)
-
-### Penalties
-- **1 missed day**: -10 units
-- **2 missed days**: -25 units  
-- **3 missed days**: -50 units
-- **4+ missed days**: -100 units
-
-## 🗂️ Project Structure
+## 📁 Project Structure
 
 ```
-push-stone/
 ├── src/
-│   ├── app/
-│   │   ├── page.tsx           # Landing page with auth
-│   │   ├── dashboard/         # Main dashboard
-│   │   └── approvals/         # Partner approval page
-│   ├── contexts/
-│   │   └── AuthContext.tsx    # Authentication context
-│   └── lib/
-│       ├── supabase.ts        # Supabase client & types
-│       └── stone-game.ts      # Game logic
+│   ├── app/                 # Next.js App Router
+│   │   ├── dashboard/       # Main dashboard page
+│   │   ├── approvals/       # Workout approval page
+│   │   ├── layout.tsx       # Root layout
+│   │   └── page.tsx         # Landing page
+│   ├── components/          # React components
+│   │   └── Calendar.tsx     # Calendar view component
+│   ├── contexts/            # React contexts
+│   │   └── AuthContext.tsx  # Authentication context
+│   └── lib/                 # Utilities
+│       ├── supabase.ts      # Supabase client & types
+│       └── stone-game.ts    # Game logic
 ├── supabase/
-│   └── schema.sql             # Database schema
-└── README.md
+│   └── schema.sql           # Database schema
+├── public/                  # Static assets
+├── .env.example             # Environment variables template
+├── DEPLOYMENT.md            # Deployment guide
+├── CLI_COMMANDS.md          # CLI commands reference
+├── SETUP.md                 # Local setup guide
+└── setup-production.sh      # Automated deployment script
 ```
 
-## 🛠️ Tech Stack
+## 🎮 Demo Mode
 
-- **Frontend**: Next.js 15, React, TypeScript, Tailwind CSS
-- **Backend**: Supabase (PostgreSQL, Auth, Real-time)
-- **Deployment**: Vercel (recommended)
+The app includes a comprehensive demo mode that works without any backend setup:
 
-## 📝 Database Schema
+1. Visit the landing page
+2. Click **"🎮 Demo Mode"**
+3. Explore all features with sample data:
+   - Dual progress bars
+   - Calendar with multiple views (Week/Month/Quarter/Year)
+   - Stone game mechanics
+   - Workout request system
+   - Partnership features
 
-### Tables
-- `users` - User profiles
-- `partnerships` - Partner connections
-- `workout_requests` - Workout submission requests
-- `stone_progress` - Game progress tracking
+## 🔧 Development
 
-### Security
-- Row Level Security (RLS) enabled
-- Users can only access their own data
-- Partners can view each other's requests
-
-## 🚢 Deployment
-
-### Deploy to Vercel
-
+### Local Development
 ```bash
-# Install Vercel CLI
-npm i -g vercel
+# Install dependencies
+npm install
 
-# Deploy
-vercel
+# Start development server
+npm run dev
 
-# Add environment variables in Vercel dashboard
+# Open http://localhost:3000
 ```
 
-## 🔮 Roadmap
+### Environment Setup
+```bash
+# Copy environment template
+cp .env.example .env.local
 
-- [ ] Calendar view with dual-sided daily tracking
-- [ ] Push notifications for pending approvals
-- [ ] Workout history and analytics
-- [ ] Multiple partnerships support
-- [ ] Custom workout categories
-- [ ] Achievement badges
-- [ ] Social sharing
+# Add your Supabase credentials
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
+
+## 📊 Database Schema
+
+The app uses 4 main tables:
+
+- **`users`**: User profiles and authentication
+- **`partnerships`**: Partner relationships and status
+- **`workout_requests`**: Workout submissions awaiting approval
+- **`stone_progress`**: Game progress tracking
+
+See [supabase/schema.sql](supabase/schema.sql) for the complete schema.
+
+## 🎯 Game Mechanics
+
+### Stone Game Logic
+- **Base Push**: 5-15 random units per workout
+- **Intensity Bonus**: +2 units per intensity level (1-5 scale)
+- **Consistency Bonus**: +3 units per consecutive day
+- **Momentum Multiplier**: 1.05x per consecutive day
+- **Target**: 100 units to complete the challenge
+
+### Workout Intensity Levels
+- **1-2**: Light workout (yellow indicator)
+- **3**: Moderate workout (green indicator)  
+- **4-5**: Intense workout (blue indicator)
+
+## 🚀 Deployment
+
+### Quick Deploy
+```bash
+# Run the automated setup
+./setup-production.sh
+```
+
+### Manual Deploy
+1. Set up Supabase project and run schema
+2. Push code to GitHub
+3. Deploy to Vercel with environment variables
+4. Configure authentication URLs
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
+
+## 📱 Features Overview
+
+### Landing Page
+- App introduction and benefits
+- Demo mode access
+- Authentication options
+- Feature showcase
+
+### Dashboard
+- Partnership status and setup
+- Dual progress bars (You vs Partner)
+- Stone game progress
+- Workout request submission
+- Calendar view integration
+
+### Calendar View
+- **Week View**: Detailed daily breakdown
+- **Month View**: Monthly overview with intensity indicators
+- **Quarter View**: Progress bars for each month
+- **Year View**: Annual summary
+
+### Approval System
+- Review partner's workout requests
+- Approve/reject with one click
+- Automatic stone progress updates
+- Request history tracking
+
+## 🔐 Security
+
+- **Row Level Security (RLS)**: Database-level access control
+- **Authentication**: Supabase Auth with email verification
+- **Partner Verification**: No self-reporting possible
+- **Environment Variables**: Secure credential management
+
+## 📈 Monitoring
+
+### Built-in Analytics
+- Supabase usage metrics
+- Vercel performance analytics
+- Real-time error tracking
+
+### Recommended Monitoring
+- Set up Vercel Analytics
+- Monitor Supabase usage limits
+- Track user engagement metrics
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
 ## 📄 License
 
-MIT License - feel free to use this project for personal or commercial purposes.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 💬 Support
+## 🆘 Support
 
-Having issues? Please check:
-1. Your Supabase credentials are correct
-2. The SQL schema has been run
-3. Email verification is complete
-4. Both partners have signed up
+### Documentation
+- [DEPLOYMENT.md](DEPLOYMENT.md) - Deployment guide
+- [CLI_COMMANDS.md](CLI_COMMANDS.md) - CLI reference
+- [SETUP.md](SETUP.md) - Local setup
+- [MVP_COMPLETE.md](MVP_COMPLETE.md) - Feature overview
+
+### Resources
+- [Supabase Docs](https://supabase.com/docs)
+- [Vercel Docs](https://vercel.com/docs)
+- [Next.js Docs](https://nextjs.org/docs)
+
+### Issues
+- Check existing issues on GitHub
+- Create a new issue with detailed description
+- Include error logs and reproduction steps
+
+## 🎉 Acknowledgments
+
+- Built with [Next.js](https://nextjs.org/)
+- Styled with [Tailwind CSS](https://tailwindcss.com/)
+- Powered by [Supabase](https://supabase.com/)
+- Deployed on [Vercel](https://vercel.com/)
 
 ---
 
-**Made with 💪 for fitness accountability**
+**Ready to get fit with your workout buddy? Start your journey today! 💪**
