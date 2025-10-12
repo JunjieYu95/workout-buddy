@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
-import { supabase, WorkoutRequest, Partnership } from '@/lib/supabase'
+import { WorkoutRequest, Partnership, StoneProgress } from '@/lib/db'
 import { format } from 'date-fns'
 import { calculateStoneReward } from '@/lib/stone-game'
 

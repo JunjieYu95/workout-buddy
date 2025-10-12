@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
-import { supabase, Partnership, WorkoutRequest, StoneProgress } from '@/lib/supabase'
+import { Partnership, WorkoutRequest, StoneProgress } from '@/lib/db'
 import { format } from 'date-fns'
 import Calendar from '@/components/Calendar'
 

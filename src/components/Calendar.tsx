@@ -26,7 +26,7 @@ import {
   isToday,
   isSameMonth,
 } from 'date-fns'
-import { WorkoutRequest } from '@/lib/supabase'
+import { WorkoutRequest } from '@/lib/db'
 
 type ViewMode = 'week' | 'month' | 'quarter' | 'year'
 

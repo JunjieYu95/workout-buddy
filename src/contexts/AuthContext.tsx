@@ -1,13 +1,19 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { supabase, User } from '@/lib/supabase'
-import type { User as SupabaseUser } from '@supabase/supabase-js'
+import { useSession, signIn, signOut } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+
+type User = {
+  id: string
+  email: string
+  name?: string
+}
 
 type AuthContextType = {
   user: User | null
   loading: boolean
-  signUp: (email: string, password: string) => Promise<{ error: any }>
+  signUp: (email: string, password: string, name?: string) => Promise<{ error: any }>
   signIn: (email: string, password: string) => Promise<{ error: any }>
   signOut: () => Promise<void>
   skipAuth: () => void
@@ -23,54 +29,113 @@ const AuthContext = createContext<AuthContextType>({
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { data: session, status } = useSession()
+  const router = useRouter()
+  const [demoMode, setDemoMode] = useState(false)
+  const [demoUser, setDemoUser] = useState<User | null>(null)
+
+  const loading = status === 'loading'
 
   useEffect(() => {
-    // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user as User | null)
-      setLoading(false)
-    })
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user as User | null)
-    })
-
-    return () => subscription.unsubscribe()
+    // Check if we're in demo mode
+    const isDemoMode = localStorage.getItem('demoMode') === 'true'
+    if (isDemoMode) {
+      setDemoMode(true)
+      setDemoUser({
+        id: 'demo-user-123',
+        email: 'demo@workoutbuddy.com',
+        name: 'Demo User'
+      })
+    }
   }, [])
 
-  const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({ email, password })
-    return { error }
+  const signUp = async (email: string, password: string, name?: string) => {
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password, name }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        return { error: { message: data.error } }
+      }
+
+      // Automatically sign in after successful registration
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      })
+
+      if (result?.error) {
+        return { error: { message: 'Registration successful, but login failed' } }
+      }
+
+      return { error: null }
+    } catch (error) {
+      return { error: { message: 'Registration failed' } }
+    }
   }
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return { error }
+  const signInWithCredentials = async (email: string, password: string) => {
+    try {
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      })
+
+      if (result?.error) {
+        return { error: { message: 'Invalid email or password' } }
+      }
+
+      return { error: null }
+    } catch (error) {
+      return { error: { message: 'Login failed' } }
+    }
   }
 
-  const signOut = async () => {
-    await supabase.auth.signOut()
-    setUser(null)
+  const signOutUser = async () => {
+    // Clear demo mode if active
+    if (demoMode) {
+      localStorage.removeItem('demoMode')
+      setDemoMode(false)
+      setDemoUser(null)
+    }
+    
+    await signOut({ redirect: false })
+    router.push('/')
   }
 
   const skipAuth = () => {
     // Demo mode - bypass auth for testing
-    const demoUser: User = {
+    const user: User = {
       id: 'demo-user-123',
       email: 'demo@workoutbuddy.com',
-      created_at: new Date().toISOString(),
+      name: 'Demo User'
     }
-    setUser(demoUser)
-    setLoading(false)
+    setDemoUser(user)
+    setDemoMode(true)
+    localStorage.setItem('demoMode', 'true')
   }
 
+  // Determine the current user
+  const currentUser = demoMode ? demoUser : (session?.user as User) || null
+
   return (
-    <AuthContext.Provider value={{ user, loading, signUp, signIn, signOut, skipAuth }}>
+    <AuthContext.Provider value={{ 
+      user: currentUser, 
+      loading: loading && !demoMode, 
+      signUp, 
+      signIn: signInWithCredentials, 
+      signOut: signOutUser, 
+      skipAuth 
+    }}>
       {children}
     </AuthContext.Provider>
   )
