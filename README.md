@@ -17,7 +17,8 @@ A gamified workout tracking app where couples/partners encourage and monitor eac
 ### 🛠 Technical Features
 - **⚡ Next.js 15**: Latest React framework with App Router
 - **🎨 Tailwind CSS**: Modern, responsive UI design
-- **🔐 Supabase**: Authentication and real-time database
+- **🐘 Neon**: Serverless PostgreSQL database
+- **🔐 NextAuth.js**: Authentication system
 - **📱 Responsive**: Works on desktop, tablet, and mobile
 - **🚀 Vercel Ready**: Optimized for production deployment
 
@@ -25,7 +26,7 @@ A gamified workout tracking app where couples/partners encourage and monitor eac
 
 ### Option 1: Automated Setup (Recommended)
 ```bash
-./setup-production.sh
+./setup-neon.sh
 ```
 This script will guide you through the entire deployment process automatically.
 
@@ -41,7 +42,7 @@ Follow the step-by-step guides:
 - npm or yarn
 - Git
 - GitHub account
-- Supabase account
+- Neon account
 - Vercel account
 
 ## 🛠 Tech Stack
@@ -49,7 +50,7 @@ Follow the step-by-step guides:
 | Category | Technology |
 |----------|------------|
 | **Frontend** | Next.js 15, React 19, Tailwind CSS |
-| **Backend** | Supabase (PostgreSQL, Auth, Real-time) |
+| **Backend** | Neon (PostgreSQL) + NextAuth.js |
 | **Deployment** | Vercel |
 | **Language** | TypeScript |
 | **Styling** | Tailwind CSS |
