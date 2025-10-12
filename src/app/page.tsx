@@ -1,18 +1,19 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function Home() {
-  const { user, loading, signUp, signIn, skipAuth } = useAuth()
   const router = useRouter()
+  const { user, loading, signUp, signIn, skipAuth } = useAuth()
   const [showAuth, setShowAuth] = useState(false)
-  const [showLearnMore, setShowLearnMore] = useState(false)
-  const [isLogin, setIsLogin] = useState(false)
+  const [isSignUp, setIsSignUp] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [name, setName] = useState('')
   const [error, setError] = useState('')
+  const [showLearnMore, setShowLearnMore] = useState(false)
 
   useEffect(() => {
     if (user && !loading) {
@@ -24,233 +25,210 @@ export default function Home() {
     e.preventDefault()
     setError('')
 
-    if (!email || !password) {
-      setError('Please fill in all fields')
-      return
-    }
-
-    const { error } = isLogin 
-      ? await signIn(email, password)
-      : await signUp(email, password)
-
-    if (error) {
-      setError(error.message)
-    } else {
-      if (!isLogin) {
-        alert('Check your email to verify your account!')
+    if (isSignUp) {
+      const { error } = await signUp(email, password, name)
+      if (error) {
+        setError(error.message || 'Failed to sign up')
+      } else {
+        router.push('/dashboard')
       }
-      router.push('/dashboard')
+    } else {
+      const { error } = await signIn(email, password)
+      if (error) {
+        setError(error.message || 'Failed to sign in')
+      } else {
+        router.push('/dashboard')
+      }
     }
+  }
+
+  const handleDemoMode = () => {
+    skipAuth()
+    router.push('/dashboard')
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <p className="text-white text-xl">Loading...</p>
+      </div>
+    )
   }
 
   if (showAuth) {
     return (
-      <main className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="max-w-md w-full mx-4">
-          <div className="bg-gray-800 rounded-lg p-8">
-            <button 
-              onClick={() => setShowAuth(false)}
-              className="text-gray-400 hover:text-white mb-4"
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+        <div className="bg-slate-800 rounded-2xl shadow-2xl p-8 w-full max-w-md">
+          <h2 className="text-3xl font-bold text-white mb-6 text-center">
+            {isSignUp ? 'Create Account' : 'Welcome Back'}
+          </h2>
+          
+          {error && (
+            <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded-lg">
+              <p className="text-red-200 text-sm">{error}</p>
+            </div>
+          )}
+
+          <form onSubmit={handleAuth} className="space-y-4">
+            {isSignUp && (
+              <div>
+                <label className="block text-slate-300 mb-2 text-sm">Name</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full p-3 rounded-lg bg-slate-700 text-white border border-slate-600 focus:border-purple-500 focus:outline-none"
+                  required
+                />
+              </div>
+            )}
+            
+            <div>
+              <label className="block text-slate-300 mb-2 text-sm">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full p-3 rounded-lg bg-slate-700 text-white border border-slate-600 focus:border-purple-500 focus:outline-none"
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-slate-300 mb-2 text-sm">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full p-3 rounded-lg bg-slate-700 text-white border border-slate-600 focus:border-purple-500 focus:outline-none"
+                required
+                minLength={6}
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition"
             >
-              ← Back
+              {isSignUp ? 'Sign Up' : 'Sign In'}
             </button>
-            <h2 className="text-3xl font-bold text-white mb-6">
-              {isLogin ? 'Welcome Back' : 'Get Started'}
-            </h2>
-            <form onSubmit={handleAuth} className="space-y-4">
-              {error && (
-                <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-2 rounded-lg">
-                  {error}
-                </div>
-              )}
-              <div>
-                <label className="block text-gray-300 mb-2">Email</label>
-                <input 
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
-                  placeholder="your@email.com"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-gray-300 mb-2">Password</label>
-                <input 
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
-                  placeholder="••••••••"
-                  required
-                  minLength={6}
-                />
-              </div>
-              <button 
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold"
-              >
-                {isLogin ? 'Log In' : 'Sign Up'}
-              </button>
-              <div className="text-center text-gray-400">
-                {isLogin ? "Don't have an account? " : "Already have an account? "}
-                <button 
-                  type="button"
-                  onClick={() => setIsLogin(!isLogin)}
-                  className="text-blue-500 hover:text-blue-400 ml-1"
-                >
-                  {isLogin ? 'Sign Up' : 'Log In'}
-                </button>
-              </div>
-            </form>
+          </form>
+
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-purple-400 hover:text-purple-300 text-sm"
+            >
+              {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+            </button>
           </div>
+
+          <div className="mt-6 pt-6 border-t border-slate-700">
+            <button
+              onClick={handleDemoMode}
+              className="w-full py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition"
+            >
+              🎮 Try Demo Mode
+            </button>
+            <p className="text-slate-400 text-xs text-center mt-2">
+              No sign-up required • Explore with sample data
+            </p>
+          </div>
+
+          <button
+            onClick={() => setShowAuth(false)}
+            className="mt-4 w-full text-slate-400 hover:text-white text-sm"
+          >
+            ← Back to home
+          </button>
         </div>
-      </main>
+      </div>
     )
   }
 
   return (
-    <main className="min-h-screen bg-gray-900">
-      <div className="container mx-auto px-4 py-8">
-        <header className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-white mb-4">
-            🏋️‍♂️ Workout Buddy
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      {/* Hero Section */}
+      <div className="container mx-auto px-4 py-16">
+        <div className="text-center mb-16">
+          <h1 className="text-6xl font-bold text-white mb-6">
+            💪 Workout Buddy
           </h1>
-          <p className="text-gray-300 text-lg">
+          <p className="text-2xl text-slate-300 mb-8">
             Partner accountability for fitness consistency
           </p>
-        </header>
-
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-gray-800 rounded-lg p-6 mb-6">
-            <h2 className="text-xl font-semibold text-white mb-4">
-              Welcome to Workout Buddy!
-            </h2>
-            <p className="text-gray-300 mb-4">
-              A partner accountability app that gamifies fitness through mutual verification and visual progress tracking.
-            </p>
-            <div className="flex gap-4">
-              <button 
-                onClick={() => setShowAuth(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                Get Started
-              </button>
-              <button 
-                onClick={() => {
-                  skipAuth()
-                  router.push('/dashboard')
-                }}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                🎮 Demo Mode
-              </button>
-              <button 
-                onClick={() => setShowLearnMore(!showLearnMore)}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                {showLearnMore ? 'Show Less' : 'Learn More'}
-              </button>
-            </div>
-            
-            {showLearnMore && (
-              <div className="mt-6 pt-6 border-t border-gray-700">
-                <h3 className="text-lg font-semibold text-white mb-3">How It Works</h3>
-                <div className="space-y-3 text-gray-300">
-                  <p>
-                    <strong className="text-white">1. Partner Up:</strong> Connect with a workout buddy who will hold you accountable.
-                  </p>
-                  <p>
-                    <strong className="text-white">2. Log Workouts:</strong> After completing a workout, send a request to your partner for verification.
-                  </p>
-                  <p>
-                    <strong className="text-white">3. Verify & Earn:</strong> Your partner approves your workout, and you both earn progress in the Stone Game!
-                  </p>
-                  <p>
-                    <strong className="text-white">4. Track Progress:</strong> Visual calendar shows both partners' consistency with color-coded intensity levels.
-                  </p>
-                  <p>
-                    <strong className="text-white">5. Stay Motivated:</strong> Stochastic rewards and escalating penalties for missed days keep you engaged!
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
+          <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-12">
+            A partner accountability app that gamifies fitness through mutual verification and visual progress tracking.
+          </p>
           
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-gray-800 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">
-                📅 Calendar View
-              </h3>
-              <p className="text-gray-300 mb-4">
+          <div className="flex gap-4 justify-center">
+            <button
+              onClick={() => setShowAuth(true)}
+              className="px-8 py-4 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition text-lg"
+            >
+              Get Started
+            </button>
+            <button
+              onClick={() => setShowLearnMore(!showLearnMore)}
+              className="px-8 py-4 bg-slate-700 text-white font-semibold rounded-lg hover:bg-slate-600 transition text-lg"
+            >
+              Learn More
+            </button>
+          </div>
+        </div>
+
+        {/* Features Grid */}
+        {showLearnMore && (
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mt-16">
+            <div className="bg-slate-800 rounded-xl p-6">
+              <h3 className="text-2xl font-bold text-white mb-3">🤝 Demo Model</h3>
+              <p className="text-slate-300 mb-2">
+                Learn more... coming soon
+              </p>
+              <p className="text-slate-400 text-sm">
+                A demo model is available to explore the app without signing up.
+              </p>
+            </div>
+
+            <div className="bg-slate-800 rounded-xl p-6">
+              <h3 className="text-2xl font-bold text-white mb-3">📅 Calendar View</h3>
+              <p className="text-slate-300 mb-2">
                 Visual progress tracking with dual-sided daily view. Color-coded intensity levels.
               </p>
-              <div className="space-y-2">
-                <div className="flex gap-2">
-                  <div className="w-4 h-4 bg-red-500 rounded"></div>
-                  <span className="text-gray-300 text-sm">No workout</span>
-                </div>
-                <div className="flex gap-2">
-                  <div className="w-4 h-4 bg-yellow-500 rounded"></div>
-                  <span className="text-gray-300 text-sm">Light workout</span>
-                </div>
-                <div className="flex gap-2">
-                  <div className="w-4 h-4 bg-green-500 rounded"></div>
-                  <span className="text-gray-300 text-sm">Full workout</span>
-                </div>
-                <div className="flex gap-2">
-                  <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                  <span className="text-gray-300 text-sm">Intense workout</span>
-                </div>
-              </div>
+              <ul className="text-slate-400 space-y-1 text-sm">
+                <li>• No workout</li>
+                <li>• Light workout</li>
+                <li>• Full workout</li>
+                <li>• Intense workout</li>
+              </ul>
             </div>
 
-            <div className="bg-gray-800 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">
-                🪨 Stone Game
-              </h3>
-              <p className="text-gray-300 mb-4">
+            <div className="bg-slate-800 rounded-xl p-6">
+              <h3 className="text-2xl font-bold text-white mb-3">🪨 Stone Game</h3>
+              <p className="text-slate-300 mb-2">
                 Gamified progress with stochastic rewards and escalating penalties.
               </p>
-              <div className="bg-gray-700 rounded-lg p-4">
-                <div className="flex justify-between text-sm text-gray-300 mb-2">
-                  <span>Progress</span>
-                  <span>0%</span>
-                </div>
-                <div className="w-full bg-gray-600 rounded-full h-2">
-                  <div className="bg-blue-500 h-2 rounded-full w-0"></div>
-                </div>
-              </div>
-              <p className="text-gray-400 text-sm mt-2">
+              <p className="text-slate-400 text-sm">
+                <strong>Progress:</strong> 0%<br />
                 Each approved workout pushes the stone forward randomly!
               </p>
             </div>
-          </div>
 
-          <div className="bg-gray-800 rounded-lg p-6 mt-6">
-            <h3 className="text-lg font-semibold text-white mb-4">
-              🤝 Request-Approval System
-            </h3>
-            <p className="text-gray-300 mb-4">
-              Partners verify each other's workouts - no self-reporting possible!
-            </p>
-            <div className="grid md:grid-cols-3 gap-4 text-sm">
-              <div className="text-center">
-                <div className="text-2xl mb-2">1️⃣</div>
-                <div className="text-gray-300">Complete workout</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl mb-2">2️⃣</div>
-                <div className="text-gray-300">Send request to partner</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl mb-2">3️⃣</div>
-                <div className="text-gray-300">Partner approves & updates progress</div>
+            <div className="bg-slate-800 rounded-xl p-6">
+              <h3 className="text-2xl font-bold text-white mb-3">🤝 Request-Approval System</h3>
+              <p className="text-slate-300 mb-2">
+                Partners verify each other's workouts - no self-reporting possible!
+              </p>
+              <div className="space-y-1 text-sm text-slate-400">
+                <p>📝 <strong>1.</strong> Complete workout</p>
+                <p>📤 <strong>2.</strong> Send request to partner</p>
+                <p>✓ <strong>3.</strong> Partner approves & updates progress</p>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
-    </main>
+    </div>
   )
 }
+

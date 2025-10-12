@@ -3,15 +3,13 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
-import { WorkoutRequest, Partnership, StoneProgress } from '@/lib/db'
-import { format } from 'date-fns'
-import { calculateStoneReward } from '@/lib/stone-game'
+import type { WorkoutRequest, StoneProgress } from '@/lib/db'
 
-export default function ApprovalsPage() {
+export default function Approvals() {
   const { user, loading } = useAuth()
   const router = useRouter()
-  const [partnership, setPartnership] = useState<Partnership | null>(null)
   const [pendingRequests, setPendingRequests] = useState<WorkoutRequest[]>([])
+  const [stoneProgress, setStoneProgress] = useState<StoneProgress | null>(null)
 
   useEffect(() => {
     if (!loading && !user) {
@@ -21,96 +19,75 @@ export default function ApprovalsPage() {
 
   useEffect(() => {
     if (user) {
-      loadPartnership()
+      loadPendingRequests()
+      loadStoneProgress()
     }
   }, [user])
 
-  const loadPartnership = async () => {
-    if (!user) return
-
-    const { data } = await supabase
-      .from('partnerships')
-      .select('*')
-      .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
-      .eq('status', 'active')
-      .single()
-
-    if (data) {
-      setPartnership(data)
-      loadPendingRequests(data)
+  const loadPendingRequests = async () => {
+    try {
+      const response = await fetch('/api/workouts?status=pending')
+      if (response.ok) {
+        const data = await response.json()
+        setPendingRequests(data.requests || [])
+      }
+    } catch (error) {
+      console.error('Error loading pending requests:', error)
     }
   }
 
-  const loadPendingRequests = async (partnership: Partnership) => {
-    const partnerId = partnership.user1_id === user?.id ? partnership.user2_id : partnership.user1_id
-
-    const { data } = await supabase
-      .from('workout_requests')
-      .select('*')
-      .eq('partnership_id', partnership.id)
-      .eq('user_id', partnerId)
-      .eq('status', 'pending')
-      .order('created_at', { ascending: false })
-
-    if (data) setPendingRequests(data)
+  const loadStoneProgress = async () => {
+    try {
+      const response = await fetch('/api/stone-progress')
+      if (response.ok) {
+        const data = await response.json()
+        setStoneProgress(data.progress)
+      }
+    } catch (error) {
+      console.error('Error loading stone progress:', error)
+    }
   }
 
   const handleApproval = async (requestId: string, approved: boolean) => {
-    if (!user || !partnership) return
-
-    // Update request status
-    const { error } = await supabase
-      .from('workout_requests')
-      .update({
-        status: approved ? 'approved' : 'rejected',
-        reviewed_at: new Date().toISOString(),
-        reviewed_by: user.id,
+    try {
+      // Update workout status
+      const workoutResponse = await fetch(`/api/workouts/${requestId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: approved ? 'approved' : 'rejected' }),
       })
-      .eq('id', requestId)
 
-    if (!error && approved) {
-      // Update stone progress
-      const { data: stoneData } = await supabase
-        .from('stone_progress')
-        .select('*')
-        .eq('partnership_id', partnership.id)
-        .single()
-
-      if (stoneData) {
-        const reward = calculateStoneReward(stoneData.current_position, stoneData.consecutive_days)
-        const newPosition = Math.min(
-          stoneData.current_position + reward,
-          stoneData.target_position
-        )
-
-        const today = new Date().toISOString().split('T')[0]
-        const lastPushDate = stoneData.last_push_date
-        const isConsecutive =
-          lastPushDate &&
-          new Date(today).getTime() - new Date(lastPushDate).getTime() === 86400000
-
-        await supabase
-          .from('stone_progress')
-          .update({
-            current_position: newPosition,
-            last_push_date: today,
-            consecutive_days: isConsecutive ? stoneData.consecutive_days + 1 : 1,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('partnership_id', partnership.id)
+      if (!workoutResponse.ok) {
+        throw new Error('Failed to update workout')
       }
-    }
 
-    // Reload pending requests
-    if (partnership) {
-      loadPendingRequests(partnership)
+      // If approved, update stone progress
+      if (approved && stoneProgress) {
+        const pushDistance = Math.floor(Math.random() * 50) + 10 // Random push: 10-60 units
+        
+        await fetch('/api/stone-progress', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            partnershipId: stoneProgress.partnership_id,
+            pushDistance,
+          }),
+        })
+      }
+
+      // Reload pending requests
+      await loadPendingRequests()
+      await loadStoneProgress()
+    } catch (error) {
+      console.error('Error handling approval:', error)
+      alert('Failed to process approval. Please try again.')
     }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <p className="text-white text-xl">Loading...</p>
       </div>
     )
   }
@@ -118,115 +95,146 @@ export default function ApprovalsPage() {
   if (!user) return null
 
   return (
-    <div className="min-h-screen bg-gray-900">
-      {/* Header */}
-      <header className="bg-gray-800 border-b border-gray-700">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-white">🏋️‍♂️ Workout Buddy</h1>
-          <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold text-white">✓ Approve Workouts</h1>
+          <div className="flex gap-3">
             <button
               onClick={() => router.push('/dashboard')}
-              className="text-gray-300 hover:text-white"
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
             >
               Dashboard
             </button>
-            <span className="text-gray-300">{user.email}</span>
+            <button
+              onClick={() => router.push('/')}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+            >
+              Sign Out
+            </button>
           </div>
         </div>
-      </header>
 
-      <div className="container mx-auto px-4 py-8">
-        <h2 className="text-3xl font-bold text-white mb-6">
-          ✅ Pending Approvals
-        </h2>
-
-        {!partnership && (
-          <div className="bg-gray-800 rounded-lg p-6">
-            <p className="text-gray-300">
-              You need to connect with a partner first.{' '}
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="text-blue-500 hover:text-blue-400"
-              >
-                Go to Dashboard
-              </button>
-            </p>
+        {/* Demo Mode Banner */}
+        {user.id === 'demo-user-123' && (
+          <div className="mb-6 p-4 bg-purple-700 text-white rounded-lg">
+            <p className="font-semibold">Demo Mode Active</p>
+            <p className="text-sm">You're viewing sample data. Set up database to enable real functionality.</p>
           </div>
         )}
 
-        {partnership && pendingRequests.length === 0 && (
-          <div className="bg-gray-800 rounded-lg p-6">
-            <p className="text-gray-300">
-              No pending approvals. Your partner hasn't submitted any workout requests yet!
-            </p>
+        {/* Request-Approval System Info */}
+        <div className="bg-slate-800 rounded-xl p-6 mb-6 shadow-xl">
+          <h2 className="text-2xl font-bold text-white mb-3 flex items-center gap-2">
+            🤝 Request-Approval System
+          </h2>
+          <p className="text-slate-300 mb-2">
+            Partners verify each other's workouts - no self-reporting possible!
+          </p>
+          <div className="space-y-2 text-sm text-slate-400">
+            <p>📝 <strong>1.</strong> Complete workout</p>
+            <p>📤 <strong>2.</strong> Send request to partner</p>
+            <p>✓ <strong>3.</strong> Partner approves & updates progress</p>
           </div>
-        )}
+        </div>
 
-        {pendingRequests.length > 0 && (
-          <div className="space-y-4">
-            {pendingRequests.map((request) => (
-              <div
-                key={request.id}
-                className="bg-gray-800 rounded-lg p-6 border-l-4 border-yellow-500"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-xl font-semibold text-white mb-2">
-                      Workout on {format(new Date(request.workout_date), 'MMMM dd, yyyy')}
-                    </h3>
-                    <div className="text-gray-400">
-                      Submitted {format(new Date(request.created_at), 'MMM dd, yyyy h:mm a')}
+        {/* Pending Approvals */}
+        <div className="bg-slate-800 rounded-xl p-6 shadow-xl">
+          <h2 className="text-2xl font-bold text-white mb-4">Pending Partner Requests</h2>
+          
+          {pendingRequests.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-slate-400 text-lg mb-2">No pending requests</p>
+              <p className="text-slate-500 text-sm">Your partner hasn't submitted any workouts for approval yet.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {pendingRequests.map((request) => (
+                <div key={request.id} className="bg-slate-700 p-6 rounded-lg">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <p className="text-white font-bold text-lg">
+                        {new Date(request.workout_date).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                      <p className="text-slate-400 text-sm mt-1">
+                        Submitted: {new Date(request.created_at).toLocaleTimeString()}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl mb-1">
+                        {request.intensity === 1 && '😴'}
+                        {request.intensity === 2 && '🚶'}
+                        {request.intensity === 3 && '💪'}
+                        {request.intensity === 4 && '🔥'}
+                        {request.intensity === 5 && '⚡'}
+                      </p>
+                      <p className="text-white font-semibold">Intensity: {request.intensity}/5</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm text-gray-400 mb-1">Intensity</div>
-                    <div className="text-2xl font-bold text-white">{request.intensity}/5</div>
+
+                  {request.notes && (
+                    <div className="mb-4 p-3 bg-slate-600 rounded">
+                      <p className="text-slate-300 text-sm font-semibold mb-1">Notes:</p>
+                      <p className="text-white">{request.notes}</p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => handleApproval(request.id, true)}
+                      className="flex-1 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition flex items-center justify-center gap-2"
+                    >
+                      ✓ Approve
+                    </button>
+                    <button
+                      onClick={() => handleApproval(request.id, false)}
+                      className="flex-1 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition flex items-center justify-center gap-2"
+                    >
+                      ✗ Reject
+                    </button>
                   </div>
                 </div>
+              ))}
+            </div>
+          )}
+        </div>
 
-                {/* Intensity visualization */}
-                <div className="mb-4">
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((level) => (
-                      <div
-                        key={level}
-                        className={`h-2 flex-1 rounded ${
-                          level <= request.intensity
-                            ? level <= 2
-                              ? 'bg-yellow-500'
-                              : level <= 3
-                              ? 'bg-green-500'
-                              : 'bg-blue-500'
-                            : 'bg-gray-600'
-                        }`}
-                      ></div>
-                    ))}
-                  </div>
-                </div>
-
-                {request.notes && (
-                  <div className="mb-4 p-4 bg-gray-700 rounded-lg">
-                    <div className="text-sm text-gray-400 mb-1">Notes:</div>
-                    <div className="text-white">{request.notes}</div>
-                  </div>
-                )}
-
-                <div className="flex gap-4">
-                  <button
-                    onClick={() => handleApproval(request.id, true)}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold"
-                  >
-                    ✓ Approve
-                  </button>
-                  <button
-                    onClick={() => handleApproval(request.id, false)}
-                    className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-semibold"
-                  >
-                    ✗ Reject
-                  </button>
-                </div>
+        {/* Stone Progress Info */}
+        {stoneProgress && (
+          <div className="mt-6 bg-slate-800 rounded-xl p-6 shadow-xl">
+            <h3 className="text-xl font-bold text-white mb-3">🪨 Current Stone Progress</h3>
+            <div className="bg-slate-700 rounded-lg p-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-slate-300">Position:</span>
+                <span className="text-white font-bold">
+                  {stoneProgress.current_position} / {stoneProgress.target_position} units
+                </span>
               </div>
-            ))}
+              <div className="w-full bg-slate-600 rounded-full h-4 overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-green-500 to-blue-500 transition-all duration-500"
+                  style={{ 
+                    width: `${(stoneProgress.current_position / stoneProgress.target_position) * 100}%` 
+                  }}
+                />
+              </div>
+              <div className="mt-3 flex justify-between text-sm">
+                <span className="text-slate-400">
+                  Consecutive days: {stoneProgress.consecutive_days}
+                </span>
+                <span className="text-slate-400">
+                  Last push: {stoneProgress.last_push_date ? new Date(stoneProgress.last_push_date).toLocaleDateString() : 'N/A'}
+                </span>
+              </div>
+            </div>
+            <p className="text-slate-400 text-sm mt-3 text-center">
+              Each approved workout pushes the stone forward randomly! 💪
+            </p>
           </div>
         )}
       </div>

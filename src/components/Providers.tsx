@@ -2,6 +2,7 @@
 
 import { SessionProvider } from 'next-auth/react'
 import { AuthProvider } from '@/contexts/AuthContext'
+import React from 'react'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -10,4 +11,3 @@ export function Providers({ children }: { children: React.ReactNode }) {
     </SessionProvider>
   )
 }
-

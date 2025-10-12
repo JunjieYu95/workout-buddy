@@ -1,4 +1,6 @@
-# Deployment Guide - Workout Buddy with Neon Database
+
+
+Deployment Guide - Workout Buddy with Neon Database
 
 This guide will help you deploy the Workout Buddy app to production using Neon PostgreSQL database and Vercel.
 

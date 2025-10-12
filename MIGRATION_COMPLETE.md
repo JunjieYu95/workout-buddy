@@ -189,7 +189,7 @@ Demo mode still works without any backend setup:
 - **Queries**: Optimized with indexes
 - **Connections**: Connection pooling enabled
 
-## Security Enhancements
+## **Security** Enhancements
 
 - **Passwords**: bcrypt hashing (12 rounds)
 - **Sessions**: Secure JWT tokens
