@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import { SessionProvider } from 'next-auth/react'
-import { AuthProvider } from '@/contexts/AuthContext'
+import { Providers } from '@/components/Providers'
 
 export const metadata: Metadata = {
   title: 'Workout Buddy',
@@ -16,9 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <SessionProvider>
-          <AuthProvider>{children}</AuthProvider>
-        </SessionProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   )

@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useSession, signIn, signOut } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
 
 type User = {
   id: string
@@ -30,7 +29,6 @@ const AuthContext = createContext<AuthContextType>({
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession()
-  const router = useRouter()
   const [demoMode, setDemoMode] = useState(false)
   const [demoUser, setDemoUser] = useState<User | null>(null)
 
@@ -108,8 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setDemoUser(null)
     }
     
-    await signOut({ redirect: false })
-    router.push('/')
+    await signOut({ callbackUrl: '/' })
   }
 
   const skipAuth = () => {
