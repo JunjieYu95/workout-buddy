@@ -1,4 +1,5 @@
 import { Pool } from 'pg'
+import bcrypt from 'bcryptjs'
 
 // Database connection pool
 let pool: Pool | null = null
@@ -68,6 +69,11 @@ export async function query(text: string, params?: any[]): Promise<any> {
     console.error('Database query error:', error)
     throw error
   }
+}
+
+// Helper function for password hashing
+export async function hashPassword(password: string): Promise<string> {
+  return await bcrypt.hash(password, 12)
 }
 
 // User functions

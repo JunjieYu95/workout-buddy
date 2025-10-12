@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createUserAccount, getUserByEmail } from '@/lib/db'
+import { getUserByEmail } from '@/lib/db'
+import { hashPassword, createUser } from '@/lib/db'
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,7 +30,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Create new user
-    const user = await createUserAccount(email, password, name)
+    const passwordHash = await hashPassword(password)
+    const user = await createUser(email, passwordHash, name)
 
     return NextResponse.json({
       message: 'User created successfully',
