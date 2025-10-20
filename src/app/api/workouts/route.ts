@@ -17,11 +17,27 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const type = searchParams.get('type')
+    const roomId = searchParams.get('roomId')
 
     if (type === 'pending') {
       // Get pending requests for the current user's partner
       const requests = await getPendingWorkoutRequestsForPartner(session.user.id)
       return NextResponse.json({ requests })
+    } else if (type === 'approved' && roomId) {
+      // Get approved workouts for calendar view
+      const { query } = await import('@/lib/db')
+      const result = await query(`
+        SELECT wr.*, u.id as user_id, u.name, u.username
+        FROM workout_requests wr
+        JOIN users u ON wr.user_id = u.id
+        JOIN room_members rm ON wr.room_id = rm.room_id
+        WHERE wr.room_id = $1
+        AND wr.status = 'approved'
+        AND rm.user_id = $2
+        ORDER BY wr.workout_date DESC
+      `, [roomId, session.user.id])
+      
+      return NextResponse.json({ workouts: result.rows })
     } else {
       // Get user's own workout requests
       const requests = await getWorkoutRequestsByUserId(session.user.id)
