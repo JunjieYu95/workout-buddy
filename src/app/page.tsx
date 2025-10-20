@@ -9,9 +9,10 @@ export default function Home() {
   const { user, loading, signUp, signIn, skipAuth } = useAuth()
   const [showAuth, setShowAuth] = useState(false)
   const [isSignUp, setIsSignUp] = useState(true)
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const [showLearnMore, setShowLearnMore] = useState(false)
 
@@ -26,14 +27,14 @@ export default function Home() {
     setError('')
 
     if (isSignUp) {
-      const { error } = await signUp(email, password, name)
+      const { error } = await signUp(username, password, name, email)
       if (error) {
         setError(error.message || 'Failed to sign up')
       } else {
         router.push('/dashboard')
       }
     } else {
-      const { error } = await signIn(email, password)
+      const { error } = await signIn(username, password)
       if (error) {
         setError(error.message || 'Failed to sign in')
       } else {
@@ -84,13 +85,23 @@ export default function Home() {
             )}
             
             <div>
-              <label className="block text-slate-300 mb-2 text-sm">Email</label>
+              <label className="block text-slate-300 mb-2 text-sm">Username</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full p-3 rounded-lg bg-slate-700 text-white border border-slate-600 focus:border-purple-500 focus:outline-none"
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-slate-300 mb-2 text-sm">Email (Optional)</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full p-3 rounded-lg bg-slate-700 text-white border border-slate-600 focus:border-purple-500 focus:outline-none"
-                required
               />
             </div>
             

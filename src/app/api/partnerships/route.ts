@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { 
   createPartnership, 
   getPartnershipByUserId,
-  getUserByEmail
+  getUserByUsername
 } from '@/lib/db'
 
 export async function GET() {
@@ -32,17 +32,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { partnerEmail } = await request.json()
+    const { partnerUsername } = await request.json()
 
-    if (!partnerEmail) {
+    if (!partnerUsername) {
       return NextResponse.json(
-        { error: 'Partner email is required' },
+        { error: 'Partner username is required' },
         { status: 400 }
       )
     }
 
     // Check if partner exists
-    const partner = await getUserByEmail(partnerEmail)
+    const partner = await getUserByUsername(partnerUsername)
     if (!partner) {
       return NextResponse.json(
         { error: 'Partner not found' },

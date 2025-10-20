@@ -5,15 +5,16 @@ import { useSession, signIn, signOut } from 'next-auth/react'
 
 type User = {
   id: string
-  email: string
+  username: string
+  email?: string
   name?: string
 }
 
 type AuthContextType = {
   user: User | null
   loading: boolean
-  signUp: (email: string, password: string, name?: string) => Promise<{ error: any }>
-  signIn: (email: string, password: string) => Promise<{ error: any }>
+  signUp: (username: string, password: string, name?: string, email?: string) => Promise<{ error: any }>
+  signIn: (username: string, password: string) => Promise<{ error: any }>
   signOut: () => Promise<void>
   skipAuth: () => void
 }
@@ -35,26 +36,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loading = status === 'loading'
 
   useEffect(() => {
-    // Check if we're in demo mode
-    const isDemoMode = localStorage.getItem('demoMode') === 'true'
-    if (isDemoMode) {
-      setDemoMode(true)
-      setDemoUser({
-        id: 'demo-user-123',
-        email: 'demo@workoutbuddy.com',
-        name: 'Demo User'
-      })
-    }
+    // Demo mode is only enabled when explicitly requested via skipAuth()
+    // No automatic demo mode activation
   }, [])
 
-  const signUp = async (email: string, password: string, name?: string) => {
+  const signUp = async (username: string, password: string, name?: string, email?: string) => {
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify({ username, password, name, email }),
       })
 
       const data = await response.json()
@@ -65,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Automatically sign in after successful registration
       const result = await signIn('credentials', {
-        email,
+        username,
         password,
         redirect: false,
       })
@@ -80,16 +73,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const signInWithCredentials = async (email: string, password: string) => {
+  const signInWithCredentials = async (username: string, password: string) => {
     try {
       const result = await signIn('credentials', {
-        email,
+        username,
         password,
         redirect: false,
       })
 
       if (result?.error) {
-        return { error: { message: 'Invalid email or password' } }
+        return { error: { message: 'Invalid username or password' } }
       }
 
       return { error: null }
@@ -113,6 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Demo mode - bypass auth for testing
     const user: User = {
       id: 'demo-user-123',
+      username: 'demo',
       email: 'demo@workoutbuddy.com',
       name: 'Demo User'
     }

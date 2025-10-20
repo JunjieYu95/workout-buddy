@@ -1,22 +1,22 @@
 import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
-import { getUserByEmail, createUser } from './db'
+import { getUserByUsername, createUser } from './db'
 
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: 'credentials',
       credentials: {
-        email: { label: 'Email', type: 'email' },
+        username: { label: 'Username', type: 'text' },
         password: { label: 'Password', type: 'password' }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        if (!credentials?.username || !credentials?.password) {
           return null
         }
 
-        const user = await getUserByEmail(credentials.email)
+        const user = await getUserByUsername(credentials.username)
         
         if (!user) {
           return null
@@ -64,7 +64,7 @@ export async function hashPassword(password: string): Promise<string> {
   return await bcrypt.hash(password, 12)
 }
 
-export async function createUserAccount(email: string, password: string, name?: string) {
+export async function createUserAccount(username: string, password: string, name?: string, email?: string) {
   const passwordHash = await hashPassword(password)
-  return await createUser(email, passwordHash, name)
+  return await createUser(username, passwordHash, name, email)
 }

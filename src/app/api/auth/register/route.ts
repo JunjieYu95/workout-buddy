@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getUserByEmail } from '@/lib/db'
+import { getUserByUsername } from '@/lib/db'
 import { hashPassword, createUser } from '@/lib/db'
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, name } = await request.json()
+    const { username, password, name, email } = await request.json()
 
-    if (!email || !password) {
+    if (!username || !password) {
       return NextResponse.json(
-        { error: 'Email and password are required' },
+        { error: 'Username and password are required' },
         { status: 400 }
       )
     }
@@ -21,22 +21,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already exists
-    const existingUser = await getUserByEmail(email)
+    const existingUser = await getUserByUsername(username)
     if (existingUser) {
       return NextResponse.json(
-        { error: 'User with this email already exists' },
+        { error: 'User with this username already exists' },
         { status: 400 }
       )
     }
 
     // Create new user
     const passwordHash = await hashPassword(password)
-    const user = await createUser(email, passwordHash, name)
+    const user = await createUser(username, passwordHash, name, email)
 
     return NextResponse.json({
       message: 'User created successfully',
       user: {
         id: user.id,
+        username: user.username,
         email: user.email,
         name: user.name
       }

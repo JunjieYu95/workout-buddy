@@ -17,7 +17,8 @@ export function getPool(): Pool {
 // Database types
 export interface User {
   id: string
-  email: string
+  username: string
+  email?: string
   name?: string
   password_hash: string
   created_at: Date
@@ -77,12 +78,17 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 // User functions
-export async function createUser(email: string, passwordHash: string, name?: string): Promise<User> {
+export async function createUser(username: string, passwordHash: string, name?: string, email?: string): Promise<User> {
   const result = await query(
-    'INSERT INTO users (email, password_hash, name) VALUES ($1, $2, $3) RETURNING *',
-    [email, passwordHash, name]
+    'INSERT INTO users (username, password_hash, name, email) VALUES ($1, $2, $3, $4) RETURNING *',
+    [username, passwordHash, name, email]
   )
   return result.rows[0]
+}
+
+export async function getUserByUsername(username: string): Promise<User | null> {
+  const result = await query('SELECT * FROM users WHERE username = $1', [username])
+  return result.rows[0] || null
 }
 
 export async function getUserByEmail(email: string): Promise<User | null> {
@@ -195,7 +201,8 @@ export async function initializeDatabase(): Promise<void> {
     -- Create users table
     CREATE TABLE IF NOT EXISTS users (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      email VARCHAR(255) UNIQUE NOT NULL,
+      username VARCHAR(255) UNIQUE NOT NULL,
+      email VARCHAR(255),
       name VARCHAR(255),
       password_hash VARCHAR(255) NOT NULL,
       created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -239,6 +246,7 @@ export async function initializeDatabase(): Promise<void> {
     );
 
     -- Create indexes for better performance
+    CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
     CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
     CREATE INDEX IF NOT EXISTS idx_partnerships_user1 ON partnerships(user1_id);
     CREATE INDEX IF NOT EXISTS idx_partnerships_user2 ON partnerships(user2_id);
