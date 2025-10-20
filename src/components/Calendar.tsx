@@ -33,22 +33,129 @@ type ViewMode = 'week' | 'month' | 'quarter' | 'year'
 interface CalendarProps {
   userWorkouts: WorkoutRequest[]
   partnerWorkouts: WorkoutRequest[]
+  userName?: string
+  partnerName?: string
   demoMode?: boolean
 }
 
-export default function Calendar({ userWorkouts, partnerWorkouts, demoMode }: CalendarProps) {
+interface DayDetailsProps {
+  date: Date
+  userWorkout?: WorkoutRequest
+  partnerWorkout?: WorkoutRequest
+  userName?: string
+  partnerName?: string
+  onClose: () => void
+}
+
+function DayDetails({ date, userWorkout, partnerWorkout, userName, partnerName, onClose }: DayDetailsProps) {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
+      <div className="bg-slate-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-start mb-4">
+          <h3 className="text-xl font-bold text-white">{format(date, 'EEEE, MMMM d, yyyy')}</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-white text-2xl leading-none">&times;</button>
+        </div>
+        
+        <div className="space-y-4">
+          {/* User's workout */}
+          <div className="bg-slate-700 rounded-lg p-4">
+            <h4 className="text-blue-400 font-semibold mb-2 flex items-center gap-2">
+              <span>👤</span> {userName || 'You'}
+            </h4>
+            {userWorkout ? (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-white font-bold text-lg">Intensity: {userWorkout.intensity}/5</span>
+                  <span className="text-2xl">
+                    {userWorkout.intensity === 1 && '😴'}
+                    {userWorkout.intensity === 2 && '🚶'}
+                    {userWorkout.intensity === 3 && '💪'}
+                    {userWorkout.intensity === 4 && '🔥'}
+                    {userWorkout.intensity === 5 && '⚡'}
+                  </span>
+                </div>
+                <p className="text-slate-300 text-sm mb-1">Pushes: {userWorkout.push_count}</p>
+                {userWorkout.notes && (
+                  <div className="mt-2 pt-2 border-t border-slate-600">
+                    <p className="text-slate-400 text-sm font-semibold mb-1">Notes:</p>
+                    <p className="text-slate-300 text-sm italic">&ldquo;{userWorkout.notes}&rdquo;</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-slate-400 text-sm">No workout logged</p>
+            )}
+          </div>
+
+          {/* Partner's workout */}
+          <div className="bg-slate-700 rounded-lg p-4">
+            <h4 className="text-green-400 font-semibold mb-2 flex items-center gap-2">
+              <span>👥</span> {partnerName || 'Partner'}
+            </h4>
+            {partnerWorkout ? (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-white font-bold text-lg">Intensity: {partnerWorkout.intensity}/5</span>
+                  <span className="text-2xl">
+                    {partnerWorkout.intensity === 1 && '😴'}
+                    {partnerWorkout.intensity === 2 && '🚶'}
+                    {partnerWorkout.intensity === 3 && '💪'}
+                    {partnerWorkout.intensity === 4 && '🔥'}
+                    {partnerWorkout.intensity === 5 && '⚡'}
+                  </span>
+                </div>
+                <p className="text-slate-300 text-sm mb-1">Pushes: {partnerWorkout.push_count}</p>
+                {partnerWorkout.notes && (
+                  <div className="mt-2 pt-2 border-t border-slate-600">
+                    <p className="text-slate-400 text-sm font-semibold mb-1">Notes:</p>
+                    <p className="text-slate-300 text-sm italic">&ldquo;{partnerWorkout.notes}&rdquo;</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-slate-400 text-sm">No workout logged</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function Calendar({ userWorkouts, partnerWorkouts, userName, partnerName, demoMode }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [viewMode, setViewMode] = useState<ViewMode>('week')
+  const [viewMode, setViewMode] = useState<ViewMode>('month')
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [selectedUserWorkout, setSelectedUserWorkout] = useState<WorkoutRequest | undefined>()
+  const [selectedPartnerWorkout, setSelectedPartnerWorkout] = useState<WorkoutRequest | undefined>()
 
   const getWorkoutForDate = (workouts: WorkoutRequest[], date: Date) => {
     return workouts.find(w => isSameDay(new Date(w.workout_date), date))
   }
 
   const getIntensityColor = (intensity?: number) => {
-    if (!intensity) return 'bg-gray-700 text-gray-500'
-    if (intensity <= 2) return 'bg-yellow-600 text-white'
-    if (intensity === 3) return 'bg-green-600 text-white'
-    return 'bg-blue-600 text-white'
+    if (!intensity) return 'bg-slate-700 text-slate-500'
+    if (intensity <= 2) return 'bg-yellow-500 text-white'
+    if (intensity === 3) return 'bg-green-500 text-white'
+    return 'bg-blue-500 text-white'
+  }
+
+  const handleDayClick = (date: Date) => {
+    const userWorkout = getWorkoutForDate(userWorkouts, date)
+    const partnerWorkout = getWorkoutForDate(partnerWorkouts, date)
+    
+    // Only open details if there's at least one workout
+    if (userWorkout || partnerWorkout) {
+      setSelectedDate(date)
+      setSelectedUserWorkout(userWorkout)
+      setSelectedPartnerWorkout(partnerWorkout)
+    }
+  }
+
+  const closeDetails = () => {
+    setSelectedDate(null)
+    setSelectedUserWorkout(undefined)
+    setSelectedPartnerWorkout(undefined)
   }
 
   const navigatePrevious = () => {
@@ -100,26 +207,29 @@ export default function Calendar({ userWorkouts, partnerWorkouts, demoMode }: Ca
           const userWorkout = getWorkoutForDate(userWorkouts, day)
           const partnerWorkout = getWorkoutForDate(partnerWorkouts, day)
           const isCurrentDay = isToday(day)
+          const hasWorkout = userWorkout || partnerWorkout
 
           return (
             <div key={day.toISOString()} className="text-center">
-              <div className={`text-xs mb-2 font-semibold ${isCurrentDay ? 'text-blue-400' : 'text-gray-400'}`}>
+              <div className={`text-xs mb-2 font-semibold ${isCurrentDay ? 'text-blue-400' : 'text-slate-400'}`}>
                 {format(day, 'EEE')}
               </div>
-              <div className={`text-sm mb-2 ${isCurrentDay ? 'text-blue-400 font-bold' : 'text-gray-300'}`}>
+              <div className={`text-sm mb-2 ${isCurrentDay ? 'text-blue-400 font-bold' : 'text-slate-300'}`}>
                 {format(day, 'd')}
               </div>
               <div className="space-y-1">
                 {/* Your workout */}
                 <div
-                  className={`h-12 rounded flex items-center justify-center text-xs font-semibold ${getIntensityColor(userWorkout?.intensity)}`}
+                  className={`h-12 rounded flex items-center justify-center text-xs font-semibold ${getIntensityColor(userWorkout?.intensity)} ${hasWorkout ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+                  onClick={() => hasWorkout && handleDayClick(day)}
                   title={`Your workout: ${userWorkout ? `${userWorkout.intensity}/5${userWorkout.notes ? ` - ${userWorkout.notes}` : ''}` : 'No workout'}`}
                 >
                   {userWorkout ? `${userWorkout.intensity}/5` : '-'}
                 </div>
                 {/* Partner's workout */}
                 <div
-                  className={`h-12 rounded flex items-center justify-center text-xs font-semibold ${getIntensityColor(partnerWorkout?.intensity)}`}
+                  className={`h-12 rounded flex items-center justify-center text-xs font-semibold ${getIntensityColor(partnerWorkout?.intensity)} ${hasWorkout ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+                  onClick={() => hasWorkout && handleDayClick(day)}
                   title={`Partner's workout: ${partnerWorkout ? `${partnerWorkout.intensity}/5${partnerWorkout.notes ? ` - ${partnerWorkout.notes}` : ''}` : 'No workout'}`}
                 >
                   {partnerWorkout ? `${partnerWorkout.intensity}/5` : '-'}
@@ -145,7 +255,7 @@ export default function Calendar({ userWorkouts, partnerWorkouts, demoMode }: Ca
       <div className="grid grid-cols-7 gap-2">
         {/* Day headers */}
         {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-          <div key={day} className="text-center text-xs font-semibold text-gray-400 mb-2">
+          <div key={day} className="text-center text-xs font-semibold text-slate-400 mb-2">
             {day}
           </div>
         ))}
@@ -160,13 +270,15 @@ export default function Calendar({ userWorkouts, partnerWorkouts, demoMode }: Ca
           const userWorkout = getWorkoutForDate(userWorkouts, day)
           const partnerWorkout = getWorkoutForDate(partnerWorkouts, day)
           const isCurrentDay = isToday(day)
+          const hasWorkout = userWorkout || partnerWorkout
 
           return (
             <div 
               key={day.toISOString()} 
-              className={`h-20 rounded p-1 ${isCurrentDay ? 'ring-2 ring-blue-400' : ''} bg-gray-800`}
+              className={`h-20 rounded p-1 ${isCurrentDay ? 'ring-2 ring-blue-400' : ''} bg-slate-800 ${hasWorkout ? 'cursor-pointer hover:bg-slate-700 transition-colors' : ''}`}
+              onClick={() => hasWorkout && handleDayClick(day)}
             >
-              <div className={`text-xs mb-1 ${isCurrentDay ? 'text-blue-400 font-bold' : 'text-gray-400'}`}>
+              <div className={`text-xs mb-1 ${isCurrentDay ? 'text-blue-400 font-bold' : 'text-slate-400'}`}>
                 {format(day, 'd')}
               </div>
               <div className="flex gap-1">
@@ -206,13 +318,13 @@ export default function Calendar({ userWorkouts, partnerWorkouts, demoMode }: Ca
           const partnerWorkoutsThisMonth = days.filter(day => getWorkoutForDate(partnerWorkouts, day)).length
 
           return (
-            <div key={month.toISOString()} className="bg-gray-800 rounded-lg p-4">
+            <div key={month.toISOString()} className="bg-slate-700 rounded-lg p-4">
               <h3 className="text-lg font-semibold text-white mb-4">{format(month, 'MMMM')}</h3>
               <div className="space-y-3">
                 <div>
                   <div className="text-sm text-blue-400 mb-1">You</div>
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-gray-700 rounded-full h-2">
+                    <div className="flex-1 bg-slate-600 rounded-full h-2">
                       <div 
                         className="bg-blue-500 h-2 rounded-full"
                         style={{ width: `${(userWorkoutsThisMonth / days.length) * 100}%` }}
@@ -224,7 +336,7 @@ export default function Calendar({ userWorkouts, partnerWorkouts, demoMode }: Ca
                 <div>
                   <div className="text-sm text-green-400 mb-1">Partner</div>
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-gray-700 rounded-full h-2">
+                    <div className="flex-1 bg-slate-600 rounded-full h-2">
                       <div 
                         className="bg-green-500 h-2 rounded-full"
                         style={{ width: `${(partnerWorkoutsThisMonth / days.length) * 100}%` }}
@@ -260,17 +372,17 @@ export default function Calendar({ userWorkouts, partnerWorkouts, demoMode }: Ca
           return (
             <div 
               key={month.toISOString()} 
-              className={`bg-gray-800 rounded-lg p-3 ${isCurrentMonth ? 'ring-2 ring-blue-400' : ''}`}
+              className={`bg-slate-700 rounded-lg p-3 ${isCurrentMonth ? 'ring-2 ring-blue-400' : ''}`}
             >
               <h4 className="text-sm font-semibold text-white mb-2">{format(month, 'MMM')}</h4>
               <div className="space-y-2">
                 <div className="flex items-center gap-1">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span className="text-xs text-gray-300">{userWorkoutsThisMonth}</span>
+                  <span className="text-xs text-slate-300">{userWorkoutsThisMonth}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-xs text-gray-300">{partnerWorkoutsThisMonth}</span>
+                  <span className="text-xs text-slate-300">{partnerWorkoutsThisMonth}</span>
                 </div>
               </div>
             </div>
@@ -296,7 +408,7 @@ export default function Calendar({ userWorkouts, partnerWorkouts, demoMode }: Ca
   }
 
   return (
-    <div className="bg-gray-800 rounded-lg p-6">
+    <div className="bg-slate-800 rounded-lg p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-white">
@@ -304,15 +416,15 @@ export default function Calendar({ userWorkouts, partnerWorkouts, demoMode }: Ca
         </h2>
         <div className="flex items-center gap-3">
           {/* View mode selector */}
-          <div className="flex bg-gray-700 rounded-lg p-1">
+          <div className="flex bg-slate-700 rounded-lg p-1">
             {(['week', 'month', 'quarter', 'year'] as ViewMode[]).map((mode) => (
               <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
                 className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
                   viewMode === mode
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-300 hover:text-white'
+                    ? 'bg-purple-600 text-white'
+                    : 'text-slate-300 hover:text-white'
                 }`}
               >
                 {mode.charAt(0).toUpperCase() + mode.slice(1)}
@@ -324,19 +436,19 @@ export default function Calendar({ userWorkouts, partnerWorkouts, demoMode }: Ca
           <div className="flex items-center gap-2">
             <button
               onClick={navigatePrevious}
-              className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white rounded"
+              className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded"
             >
               ←
             </button>
             <button
               onClick={goToToday}
-              className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white rounded text-sm"
+              className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded text-sm"
             >
               Today
             </button>
             <button
               onClick={navigateNext}
-              className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white rounded"
+              className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded"
             >
               →
             </button>
@@ -351,22 +463,35 @@ export default function Calendar({ userWorkouts, partnerWorkouts, demoMode }: Ca
       {viewMode === 'year' && renderYearView()}
 
       {/* Legend */}
-      <div className="mt-6 pt-4 border-t border-gray-700">
+      <div className="mt-6 pt-4 border-t border-slate-700">
         <div className="flex items-center justify-center gap-6 text-sm">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-blue-600 rounded"></div>
-            <span className="text-gray-300">You</span>
+            <div className="w-4 h-4 bg-blue-500 rounded"></div>
+            <span className="text-slate-300">You</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-green-600 rounded"></div>
-            <span className="text-gray-300">Partner</span>
+            <div className="w-4 h-4 bg-green-500 rounded"></div>
+            <span className="text-slate-300">Partner</span>
           </div>
-          <span className="text-gray-500">|</span>
-          <span className="text-gray-400 text-xs">
-            Color: Yellow (1-2) → Green (3) → Blue (4-5)
+          <span className="text-slate-500">|</span>
+          <span className="text-slate-400 text-xs">
+            Intensity: Yellow (1-2) → Green (3) → Blue (4-5)
           </span>
         </div>
+        <p className="text-center text-slate-400 text-xs mt-2">Click on any day with workouts to see details</p>
       </div>
+
+      {/* Day Details Modal */}
+      {selectedDate && (
+        <DayDetails
+          date={selectedDate}
+          userWorkout={selectedUserWorkout}
+          partnerWorkout={selectedPartnerWorkout}
+          userName={userName}
+          partnerName={partnerName}
+          onClose={closeDetails}
+        />
+      )}
     </div>
   )
 }

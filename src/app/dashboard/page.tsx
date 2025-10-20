@@ -32,7 +32,13 @@ export default function Dashboard() {
   const [showJoinRoom, setShowJoinRoom] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showWorkoutForm, setShowWorkoutForm] = useState(false)
+  const [showCalendar, setShowCalendar] = useState(false)
   const [error, setError] = useState('')
+  
+  // Calendar data
+  const [calendarWorkouts, setCalendarWorkouts] = useState<WorkoutRequest[]>([])
+  const [userCalendarWorkouts, setUserCalendarWorkouts] = useState<WorkoutRequest[]>([])
+  const [partnerCalendarWorkouts, setPartnerCalendarWorkouts] = useState<WorkoutRequest[]>([])
   
   // Form state
   const [roomName, setRoomName] = useState('')
@@ -156,6 +162,26 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error('Error loading user progress:', error)
+    }
+  }
+
+  const loadCalendarWorkouts = async () => {
+    if (!room?.id || !user?.id) return
+    try {
+      const response = await fetch(`/api/workouts?type=approved&roomId=${room.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        setCalendarWorkouts(data.workouts || [])
+        
+        // Separate user and partner workouts
+        const userWorkouts = (data.workouts || []).filter((w: WorkoutRequest) => w.user_id === user.id)
+        const partnerWorkouts = (data.workouts || []).filter((w: WorkoutRequest) => w.user_id !== user.id)
+        
+        setUserCalendarWorkouts(userWorkouts)
+        setPartnerCalendarWorkouts(partnerWorkouts)
+      }
+    } catch (error) {
+      console.error('Error loading calendar workouts:', error)
     }
   }
 
@@ -776,9 +802,20 @@ export default function Dashboard() {
         {/* Dual Progress Bars - Only show if room is active */}
         {roomActive && stoneProgress && (
           <div className="bg-slate-800 rounded-xl p-6 mb-6 shadow-xl">
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-              🪨 Stone Game Progress - Competition
-            </h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                🪨 Stone Game Progress - Competition
+              </h2>
+              <button
+                onClick={() => {
+                  loadCalendarWorkouts()
+                  setShowCalendar(true)
+                }}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
+              >
+                📅 Calendar View
+              </button>
+            </div>
             
             {/* Individual Progress Bars */}
             <div className="space-y-6 mb-6">
@@ -1071,6 +1108,31 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+        )}
+
+        {/* Calendar Modal */}
+        {showCalendar && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 p-4">
+            <div className="bg-slate-900 rounded-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+              <div className="sticky top-0 bg-slate-900 border-b border-slate-700 p-6 flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-white">📅 Workout Calendar</h2>
+                <button
+                  onClick={() => setShowCalendar(false)}
+                  className="text-gray-400 hover:text-white text-3xl leading-none"
+                >
+                  &times;
+                </button>
+              </div>
+              <div className="p-6">
+                <Calendar
+                  userWorkouts={userCalendarWorkouts}
+                  partnerWorkouts={partnerCalendarWorkouts}
+                  userName={user?.name || user?.username}
+                  partnerName={members.find(m => m.id !== user?.id)?.name || members.find(m => m.id !== user?.id)?.username}
+                />
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
