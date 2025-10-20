@@ -59,10 +59,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create partnership
-    const partnership = await createPartnership(session.user.id, partner.id)
+    // Create partnership (legacy - now using room system)
+    // For backward compatibility, we'll create a partnership but it's not used in the new room-based system
+    const partnership = await createPartnership(session.user.id, partner.id, 'legacy-room')
 
-    return NextResponse.json(partnership)
+    return NextResponse.json({ partnership })
   } catch (error) {
     console.error('Error creating partnership:', error)
     return NextResponse.json(
