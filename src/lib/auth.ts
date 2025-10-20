@@ -3,6 +3,22 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import { getUserByUsername, createUser } from './db'
 
+// Extend NextAuth types
+declare module 'next-auth' {
+  interface User {
+    id: string
+  }
+  
+  interface Session {
+    user: {
+      id: string
+      name?: string | null
+      email?: string | null
+      image?: string | null
+    }
+  }
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
