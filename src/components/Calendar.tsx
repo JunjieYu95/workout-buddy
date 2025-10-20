@@ -408,51 +408,54 @@ export default function Calendar({ userWorkouts, partnerWorkouts, userName, part
   }
 
   return (
-    <div className="bg-slate-800 rounded-lg p-6">
+    <div className="bg-slate-800 rounded-lg p-4 sm:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-white">
-          📅 {getViewTitle()}
-        </h2>
-        <div className="flex items-center gap-3">
-          {/* View mode selector */}
-          <div className="flex bg-slate-700 rounded-lg p-1">
-            {(['week', 'month', 'quarter', 'year'] as ViewMode[]).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => setViewMode(mode)}
-                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                  viewMode === mode
-                    ? 'bg-purple-600 text-white'
-                    : 'text-slate-300 hover:text-white'
-                }`}
-              >
-                {mode.charAt(0).toUpperCase() + mode.slice(1)}
-              </button>
-            ))}
-          </div>
-          
-          {/* Navigation */}
-          <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-4 mb-6">
+        {/* Title and Date */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg sm:text-xl font-semibold text-white truncate">
+            📅 {getViewTitle()}
+          </h2>
+          {/* Navigation - Mobile optimized */}
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             <button
               onClick={navigatePrevious}
-              className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded"
+              className="px-2 sm:px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded text-sm"
+              aria-label="Previous"
             >
               ←
             </button>
             <button
               onClick={goToToday}
-              className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded text-sm"
+              className="px-2 sm:px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs sm:text-sm whitespace-nowrap"
             >
               Today
             </button>
             <button
               onClick={navigateNext}
-              className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded"
+              className="px-2 sm:px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded text-sm"
+              aria-label="Next"
             >
               →
             </button>
           </div>
+        </div>
+
+        {/* View mode selector - Full width on mobile */}
+        <div className="flex bg-slate-700 rounded-lg p-1 w-full sm:w-auto">
+          {(['week', 'month', 'quarter', 'year'] as ViewMode[]).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => setViewMode(mode)}
+              className={`flex-1 sm:flex-none px-2 sm:px-3 py-1.5 sm:py-1 rounded text-xs sm:text-sm font-medium transition-colors ${
+                viewMode === mode
+                  ? 'bg-purple-600 text-white'
+                  : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              {mode.charAt(0).toUpperCase() + mode.slice(1)}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -464,17 +467,19 @@ export default function Calendar({ userWorkouts, partnerWorkouts, userName, part
 
       {/* Legend */}
       <div className="mt-6 pt-4 border-t border-slate-700">
-        <div className="flex items-center justify-center gap-6 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-blue-500 rounded"></div>
-            <span className="text-slate-300">You</span>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-sm">
+          <div className="flex items-center gap-4 sm:gap-6">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-blue-500 rounded"></div>
+              <span className="text-slate-300 text-xs sm:text-sm">You</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-green-500 rounded"></div>
+              <span className="text-slate-300 text-xs sm:text-sm">Partner</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-green-500 rounded"></div>
-            <span className="text-slate-300">Partner</span>
-          </div>
-          <span className="text-slate-500">|</span>
-          <span className="text-slate-400 text-xs">
+          <span className="hidden sm:inline text-slate-500">|</span>
+          <span className="text-slate-400 text-xs text-center">
             Intensity: Yellow (1-2) → Green (3) → Blue (4-5)
           </span>
         </div>
