@@ -21,11 +21,11 @@ export async function GET(request: NextRequest) {
     if (type === 'pending') {
       // Get pending requests for the current user's partner
       const requests = await getPendingWorkoutRequestsForPartner(session.user.id)
-      return NextResponse.json(requests)
+      return NextResponse.json({ requests })
     } else {
       // Get user's own workout requests
       const requests = await getWorkoutRequestsByUserId(session.user.id)
-      return NextResponse.json(requests)
+      return NextResponse.json({ requests })
     }
   } catch (error) {
     console.error('Error fetching workouts:', error)
@@ -43,11 +43,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { partnershipId, workoutDate, intensity, notes } = await request.json()
+    const { roomId, workoutDate, intensity, pushCount, notes } = await request.json()
 
-    if (!partnershipId || !workoutDate || !intensity) {
+    if (!roomId || !workoutDate || !intensity) {
       return NextResponse.json(
-        { error: 'Partnership ID, workout date, and intensity are required' },
+        { error: 'Room ID, workout date, and intensity are required' },
         { status: 400 }
       )
     }
@@ -61,9 +61,10 @@ export async function POST(request: NextRequest) {
 
     const workoutRequest = await createWorkoutRequest(
       session.user.id,
-      partnershipId,
+      roomId,
       new Date(workoutDate),
       intensity,
+      pushCount || intensity, // Default pushCount to intensity if not provided
       notes
     )
 

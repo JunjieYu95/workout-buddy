@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { getStoneProgressByPartnership, updateStoneProgress } from '@/lib/db'
+import { getStoneProgressByRoom, updateStoneProgress } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,17 +11,14 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const partnershipId = searchParams.get('partnershipId')
+    const roomId = searchParams.get('roomId')
 
-    if (!partnershipId) {
-      return NextResponse.json(
-        { error: 'Partnership ID is required' },
-        { status: 400 }
-      )
+    if (!roomId) {
+      return NextResponse.json({ progress: null })
     }
 
-    const stoneProgress = await getStoneProgressByPartnership(partnershipId)
-    return NextResponse.json(stoneProgress)
+    const stoneProgress = await getStoneProgressByRoom(roomId)
+    return NextResponse.json({ progress: stoneProgress })
   } catch (error) {
     console.error('Error fetching stone progress:', error)
     return NextResponse.json(
@@ -38,17 +35,17 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { partnershipId, currentPosition, consecutiveDays, lastPushDate } = await request.json()
+    const { roomId, currentPosition, consecutiveDays, lastPushDate } = await request.json()
 
-    if (!partnershipId || currentPosition === undefined || consecutiveDays === undefined) {
+    if (!roomId || currentPosition === undefined || consecutiveDays === undefined) {
       return NextResponse.json(
-        { error: 'Partnership ID, current position, and consecutive days are required' },
+        { error: 'Room ID, current position, and consecutive days are required' },
         { status: 400 }
       )
     }
 
     await updateStoneProgress(
-      partnershipId,
+      roomId,
       currentPosition,
       consecutiveDays,
       lastPushDate ? new Date(lastPushDate) : undefined

@@ -15,7 +15,7 @@ export async function GET() {
     }
 
     const partnership = await getPartnershipByUserId(session.user.id)
-    return NextResponse.json(partnership)
+    return NextResponse.json({ partnership })
   } catch (error) {
     console.error('Error fetching partnership:', error)
     return NextResponse.json(

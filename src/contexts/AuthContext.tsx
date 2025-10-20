@@ -97,9 +97,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('demoMode')
       setDemoMode(false)
       setDemoUser(null)
+      window.location.href = '/'
+      return
     }
     
-    await signOut({ callbackUrl: '/' })
+    // Sign out and force redirect
+    await signOut({ redirect: false })
+    window.location.href = '/'
   }
 
   const skipAuth = () => {
