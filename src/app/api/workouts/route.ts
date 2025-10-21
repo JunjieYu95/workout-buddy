@@ -24,7 +24,8 @@ export async function GET(request: NextRequest) {
       const requests = await getPendingWorkoutRequestsForPartner(session.user.id)
       return NextResponse.json({ requests })
     } else if (type === 'approved' && roomId) {
-      // Get approved workouts for calendar view
+      // RULE 2: Always pull fresh data from database
+      // Get approved workouts for calendar view - no caching
       const { query } = await import('@/lib/db')
       const result = await query(`
         SELECT wr.*, u.id as user_id, u.name, u.username
@@ -38,6 +39,7 @@ export async function GET(request: NextRequest) {
       `, [roomId, session.user.id])
       
       // Format dates to ensure consistent date-only format (YYYY-MM-DD)
+      // This ensures timezone conversion happens on the client side
       const workouts = result.rows.map((workout: any) => ({
         ...workout,
         workout_date: workout.workout_date instanceof Date 
@@ -45,7 +47,7 @@ export async function GET(request: NextRequest) {
           : workout.workout_date
       }))
       
-      // Add cache-control headers to prevent stale data
+      // RULE 2: Add cache-control headers to prevent stale data
       return NextResponse.json({ workouts }, {
         headers: {
           'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
@@ -90,10 +92,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // RULE 1: Parse date in a timezone-agnostic way (date-only format)
+    // Expecting workoutDate in YYYY-MM-DD format from client
     const workoutRequest = await createWorkoutRequest(
       session.user.id,
       roomId,
-      new Date(workoutDate),
+      new Date(workoutDate + 'T00:00:00Z'), // Parse as UTC to store date-only
       intensity,
       pushCount || intensity, // Default pushCount to intensity if not provided
       notes

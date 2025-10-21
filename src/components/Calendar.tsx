@@ -132,10 +132,25 @@ export default function Calendar({ userWorkouts, partnerWorkouts, userName, part
 
   const getWorkoutForDate = (workouts: WorkoutRequest[], date: Date) => {
     return workouts.find(w => {
-      // Parse date string as local date to avoid timezone issues
-      const workoutDate = typeof w.workout_date === 'string' 
-        ? new Date(w.workout_date + 'T00:00:00') // Add time to ensure local timezone parsing
-        : new Date(w.workout_date)
+      // RULE 1: Always convert to device timezone before any calculation
+      // Parse date string and ensure it's in the device's local timezone
+      let workoutDate: Date
+      if (typeof w.workout_date === 'string') {
+        // If date is in format YYYY-MM-DD, parse it as local date
+        if (w.workout_date.includes('T')) {
+          // Has time component, parse and convert to local
+          workoutDate = new Date(w.workout_date)
+        } else {
+          // Date-only string, parse as local date at midnight
+          const [year, month, day] = w.workout_date.split('-').map(Number)
+          workoutDate = new Date(year, month - 1, day, 0, 0, 0, 0)
+        }
+      } else {
+        // Date object, ensure it's in local timezone
+        workoutDate = new Date(w.workout_date)
+      }
+      
+      // Now compare using the device's local timezone
       return isSameDay(workoutDate, date)
     })
   }
