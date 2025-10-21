@@ -37,7 +37,22 @@ export async function GET(request: NextRequest) {
         ORDER BY wr.workout_date DESC
       `, [roomId, session.user.id])
       
-      return NextResponse.json({ workouts: result.rows })
+      // Format dates to ensure consistent date-only format (YYYY-MM-DD)
+      const workouts = result.rows.map((workout: any) => ({
+        ...workout,
+        workout_date: workout.workout_date instanceof Date 
+          ? workout.workout_date.toISOString().split('T')[0]
+          : workout.workout_date
+      }))
+      
+      // Add cache-control headers to prevent stale data
+      return NextResponse.json({ workouts }, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      })
     } else {
       // Get user's own workout requests
       const requests = await getWorkoutRequestsByUserId(session.user.id)

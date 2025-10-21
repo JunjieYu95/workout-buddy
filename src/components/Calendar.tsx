@@ -131,7 +131,13 @@ export default function Calendar({ userWorkouts, partnerWorkouts, userName, part
   const [selectedPartnerWorkout, setSelectedPartnerWorkout] = useState<WorkoutRequest | undefined>()
 
   const getWorkoutForDate = (workouts: WorkoutRequest[], date: Date) => {
-    return workouts.find(w => isSameDay(new Date(w.workout_date), date))
+    return workouts.find(w => {
+      // Parse date string as local date to avoid timezone issues
+      const workoutDate = typeof w.workout_date === 'string' 
+        ? new Date(w.workout_date + 'T00:00:00') // Add time to ensure local timezone parsing
+        : new Date(w.workout_date)
+      return isSameDay(workoutDate, date)
+    })
   }
 
   const getIntensityColor = (intensity?: number) => {
