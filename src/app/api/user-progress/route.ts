@@ -7,7 +7,8 @@ import {
   getStoneProgressByRoom,
   updateStoneProgress,
   getRoomById,
-  getAllUserProgressInRoom
+  getAllUserProgressInRoom,
+  recordDailyScore
 } from '@/lib/db'
 import { calculateSinglePush, calculatePull } from '@/lib/stone-game'
 
@@ -127,6 +128,9 @@ export async function POST(request: NextRequest) {
       newConsecutiveDays,
       today
     )
+
+    // Record daily score for graphing
+    await recordDailyScore(session.user.id, roomId, today, pushDistance)
 
     // Get updated progress for all users
     const allProgress = await getAllUserProgressInRoom(roomId)

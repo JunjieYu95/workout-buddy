@@ -92,6 +92,16 @@ export interface UserProgress {
   updated_at: Date
 }
 
+export interface DailyScore {
+  id: string
+  user_id: string
+  room_id: string
+  score_date: Date
+  score: number
+  created_at: Date
+  updated_at: Date
+}
+
 // Database utility functions
 export async function query(text: string, params?: any[]): Promise<any> {
   const pool = getPool()
@@ -406,6 +416,32 @@ export async function getAllUserProgressInRoom(roomId: string): Promise<UserProg
   return result.rows
 }
 
+// Daily score functions
+export async function recordDailyScore(
+  userId: string,
+  roomId: string,
+  scoreDate: Date,
+  score: number
+): Promise<DailyScore> {
+  const result = await query(
+    `INSERT INTO daily_scores (user_id, room_id, score_date, score) 
+     VALUES ($1, $2, $3, $4) 
+     ON CONFLICT (user_id, room_id, score_date) 
+     DO UPDATE SET score = daily_scores.score + EXCLUDED.score, updated_at = NOW()
+     RETURNING *`,
+    [userId, roomId, scoreDate, score]
+  )
+  return result.rows[0]
+}
+
+export async function getDailyScoresByRoom(roomId: string): Promise<DailyScore[]> {
+  const result = await query(
+    'SELECT * FROM daily_scores WHERE room_id = $1 ORDER BY score_date ASC',
+    [roomId]
+  )
+  return result.rows
+}
+
 // Initialize database tables
 export async function initializeDatabase(): Promise<void> {
   const createTables = `
@@ -496,6 +532,18 @@ export async function initializeDatabase(): Promise<void> {
       UNIQUE(user_id, room_id)
     );
 
+    -- Create daily_scores table for tracking score over time
+    CREATE TABLE IF NOT EXISTS daily_scores (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+      room_id UUID REFERENCES rooms(id) ON DELETE CASCADE NOT NULL,
+      score_date DATE NOT NULL,
+      score FLOAT DEFAULT 0 NOT NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      UNIQUE(user_id, room_id, score_date)
+    );
+
     -- Create indexes for better performance
     CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
     CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
@@ -512,6 +560,9 @@ export async function initializeDatabase(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_stone_progress_room_id ON stone_progress(room_id);
     CREATE INDEX IF NOT EXISTS idx_user_progress_user_id ON user_progress(user_id);
     CREATE INDEX IF NOT EXISTS idx_user_progress_room_id ON user_progress(room_id);
+    CREATE INDEX IF NOT EXISTS idx_daily_scores_user_id ON daily_scores(user_id);
+    CREATE INDEX IF NOT EXISTS idx_daily_scores_room_id ON daily_scores(room_id);
+    CREATE INDEX IF NOT EXISTS idx_daily_scores_date ON daily_scores(score_date);
   `
 
   await query(createTables)
