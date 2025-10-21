@@ -136,7 +136,12 @@ export default function Calendar({ userWorkouts, partnerWorkouts, userName, part
       const workoutDate = typeof w.workout_date === 'string' 
         ? new Date(w.workout_date + 'T00:00:00') // Add time to ensure local timezone parsing
         : new Date(w.workout_date)
-      return isSameDay(workoutDate, date)
+      
+      // Convert both dates to local date strings for comparison
+      const workoutDateStr = workoutDate.toLocaleDateString('en-CA') // YYYY-MM-DD format
+      const targetDateStr = date.toLocaleDateString('en-CA')
+      
+      return workoutDateStr === targetDateStr
     })
   }
 
