@@ -304,6 +304,10 @@ export default function Dashboard() {
     setError('')
     
     try {
+      // Use date-only format (YYYY-MM-DD) to avoid timezone issues
+      const today = new Date()
+      const workoutDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+      
       const response = await fetch('/api/workouts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -311,7 +315,7 @@ export default function Dashboard() {
           intensity: workoutIntensity,
           notes: workoutNotes,
           roomId: room.id,
-          workoutDate: new Date().toISOString(),
+          workoutDate: workoutDate,
           pushCount: workoutIntensity // Number of pushes equals intensity
         }),
       })
