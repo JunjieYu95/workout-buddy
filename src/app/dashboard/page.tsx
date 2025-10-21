@@ -1129,6 +1129,7 @@ export default function Dashboard() {
                   partnerWorkouts={partnerCalendarWorkouts}
                   userName={user?.name || user?.username}
                   partnerName={members.find(m => m.id !== user?.id)?.name || members.find(m => m.id !== user?.id)?.username}
+                  onRefresh={loadCalendarWorkouts}
                 />
               </div>
             </div>
