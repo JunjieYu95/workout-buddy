@@ -36,6 +36,7 @@ interface CalendarProps {
   userName?: string
   partnerName?: string
   demoMode?: boolean
+  onRefresh?: () => void
 }
 
 interface DayDetailsProps {
@@ -122,7 +123,7 @@ function DayDetails({ date, userWorkout, partnerWorkout, userName, partnerName, 
   )
 }
 
-export default function Calendar({ userWorkouts, partnerWorkouts, userName, partnerName, demoMode }: CalendarProps) {
+export default function Calendar({ userWorkouts, partnerWorkouts, userName, partnerName, demoMode, onRefresh }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [viewMode, setViewMode] = useState<ViewMode>('month')
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
@@ -408,20 +409,36 @@ export default function Calendar({ userWorkouts, partnerWorkouts, userName, part
   }
 
   return (
-    <div className="bg-slate-800 rounded-lg p-6">
+    <div className="bg-slate-800 rounded-lg p-4 sm:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-white">
-          📅 {getViewTitle()}
-        </h2>
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg sm:text-xl font-semibold text-white">
+            📅 {getViewTitle()}
+          </h2>
+          {/* Refresh Button */}
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 shrink-0"
+              title="Refresh calendar data"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span className="hidden sm:inline">Refresh</span>
+            </button>
+          )}
+        </div>
+        
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
           {/* View mode selector */}
-          <div className="flex bg-slate-700 rounded-lg p-1">
+          <div className="flex bg-slate-700 rounded-lg p-1 w-full sm:w-auto overflow-x-auto">
             {(['week', 'month', 'quarter', 'year'] as ViewMode[]).map((mode) => (
               <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
-                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
                   viewMode === mode
                     ? 'bg-purple-600 text-white'
                     : 'text-slate-300 hover:text-white'
@@ -433,22 +450,22 @@ export default function Calendar({ userWorkouts, partnerWorkouts, userName, part
           </div>
           
           {/* Navigation */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
               onClick={navigatePrevious}
-              className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded"
+              className="flex-1 sm:flex-none px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded text-sm"
             >
               ←
             </button>
             <button
               onClick={goToToday}
-              className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded text-sm"
+              className="flex-1 sm:flex-none px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs sm:text-sm whitespace-nowrap"
             >
               Today
             </button>
             <button
               onClick={navigateNext}
-              className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded"
+              className="flex-1 sm:flex-none px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded text-sm"
             >
               →
             </button>
