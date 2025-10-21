@@ -350,6 +350,10 @@ export default function Dashboard() {
         await loadPendingApprovals()
         await loadStoneProgress()
         await loadUserProgress()
+        // Reload calendar data if calendar is currently visible
+        if (showCalendar) {
+          await loadCalendarWorkouts()
+        }
       } else {
         setError(data.error || 'Failed to process approval')
       }
