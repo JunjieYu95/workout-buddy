@@ -73,6 +73,8 @@ export default function Dashboard() {
       loadRequests()
       loadPendingApprovals()
       loadUserProgress()
+      // RULE 2: Preload calendar data when room is loaded
+      loadCalendarWorkouts()
     }
   }, [room])
 
@@ -168,7 +170,16 @@ export default function Dashboard() {
   const loadCalendarWorkouts = async () => {
     if (!room?.id || !user?.id) return
     try {
-      const response = await fetch(`/api/workouts?type=approved&roomId=${room.id}`)
+      // RULE 2: Always pull data from database with cache-busting
+      const timestamp = new Date().getTime()
+      const response = await fetch(`/api/workouts?type=approved&roomId=${room.id}&_t=${timestamp}`, {
+        // Ensure no caching
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      })
       if (response.ok) {
         const data = await response.json()
         setCalendarWorkouts(data.workouts || [])
@@ -304,7 +315,7 @@ export default function Dashboard() {
     setError('')
     
     try {
-      // Use date-only format (YYYY-MM-DD) to avoid timezone issues
+      // RULE 1: Always convert to device timezone before any calculation
       const today = new Date()
       const workoutDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
       
@@ -324,6 +335,8 @@ export default function Dashboard() {
       
       if (response.ok) {
         await loadRequests()
+        // RULE 2: Always reload calendar data from database
+        await loadCalendarWorkouts()
         setShowWorkoutForm(false)
         setWorkoutIntensity(3)
         setWorkoutNotes('')
@@ -354,10 +367,8 @@ export default function Dashboard() {
         await loadPendingApprovals()
         await loadStoneProgress()
         await loadUserProgress()
-        // Reload calendar data if calendar is currently visible
-        if (showCalendar) {
-          await loadCalendarWorkouts()
-        }
+        // RULE 2: Always reload calendar data from database after approval
+        await loadCalendarWorkouts()
       } else {
         setError(data.error || 'Failed to process approval')
       }
@@ -815,8 +826,9 @@ export default function Dashboard() {
                 🪨 Stone Game Progress - Competition
               </h2>
               <button
-                onClick={() => {
-                  loadCalendarWorkouts()
+                onClick={async () => {
+                  // RULE 2: Always pull fresh data from database when opening calendar
+                  await loadCalendarWorkouts()
                   setShowCalendar(true)
                 }}
                 className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
