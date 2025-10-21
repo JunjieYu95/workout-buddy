@@ -8,7 +8,8 @@ import {
   updateStoneProgress,
   getRoomById,
   getAllUserProgressInRoom,
-  getRoomMembers
+  getRoomMembers,
+  createDailyScore
 } from '@/lib/db'
 import { calculatePull } from '@/lib/stone-game'
 
@@ -67,6 +68,16 @@ export async function POST(request: NextRequest) {
       newStonePosition,
       stoneProgress.consecutive_days,
       stoneProgress.last_push_date
+    )
+
+    // Create daily score entry for the target user (after pull)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    await createDailyScore(
+      targetUserId,
+      roomId,
+      today,
+      newTargetPosition
     )
 
     // Get updated progress for all users

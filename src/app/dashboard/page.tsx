@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import Calendar from '@/components/Calendar'
+import GraphView from '@/components/GraphView'
 import type { Room, WorkoutRequest, StoneProgress, UserProgress, User } from '@/lib/db'
 
 interface UserProgressWithUser extends UserProgress {
@@ -33,6 +34,7 @@ export default function Dashboard() {
   const [showSettings, setShowSettings] = useState(false)
   const [showWorkoutForm, setShowWorkoutForm] = useState(false)
   const [showCalendar, setShowCalendar] = useState(false)
+  const [showGraph, setShowGraph] = useState(false)
   const [error, setError] = useState('')
   
   // Calendar data
@@ -814,15 +816,23 @@ export default function Dashboard() {
               <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                 🪨 Stone Game Progress - Competition
               </h2>
-              <button
-                onClick={() => {
-                  loadCalendarWorkouts()
-                  setShowCalendar(true)
-                }}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
-              >
-                📅 Calendar View
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    loadCalendarWorkouts()
+                    setShowCalendar(true)
+                  }}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
+                >
+                  📅 Calendar View
+                </button>
+                <button
+                  onClick={() => setShowGraph(true)}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                >
+                  📈 Graph View
+                </button>
+              </div>
             </div>
             
             {/* Individual Progress Bars */}
@@ -868,25 +878,9 @@ export default function Dashboard() {
               })}
             </div>
 
-            {/* Total Progress */}
+            {/* Streak Info */}
             <div className="border-t border-slate-700 pt-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-white font-semibold">Total Progress</span>
-                <span className="text-white font-bold">{Math.round(progress)}%</span>
-            </div>
-            <div className="w-full bg-slate-700 rounded-full h-8 overflow-hidden">
-              <div 
-                  className="h-full bg-gradient-to-r from-purple-500 to-purple-600 transition-all duration-500 flex items-center justify-end pr-2"
-                  style={{ width: `${Math.max(progress, 2)}%` }}
-                >
-                  {progress > 5 && (
-                    <span className="text-white text-sm font-semibold">
-                      {stoneProgress.current_position.toFixed(2)}/{stoneProgress.target_position}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="mt-2 flex items-center gap-2 text-orange-400">
+              <div className="flex items-center justify-center gap-2 text-orange-400">
                 <span>🔥 {streak} day streak!</span>
               </div>
             </div>
@@ -1138,6 +1132,33 @@ export default function Dashboard() {
                   userName={user?.name || user?.username}
                   partnerName={members.find(m => m.id !== user?.id)?.name || members.find(m => m.id !== user?.id)?.username}
                   onRefresh={loadCalendarWorkouts}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Graph Modal */}
+        {showGraph && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 p-4">
+            <div className="bg-slate-900 rounded-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+              <div className="sticky top-0 bg-slate-900 border-b border-slate-700 p-6 flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-white">📈 Progress Graph</h2>
+                <button
+                  onClick={() => setShowGraph(false)}
+                  className="text-gray-400 hover:text-white text-3xl leading-none"
+                >
+                  &times;
+                </button>
+              </div>
+              <div className="p-6">
+                <GraphView
+                  roomId={room?.id || ''}
+                  userId={user?.id || ''}
+                  partnerId={members.find(m => m.id !== user?.id)?.id || ''}
+                  userName={user?.name || user?.username}
+                  partnerName={members.find(m => m.id !== user?.id)?.name || members.find(m => m.id !== user?.id)?.username}
+                  onRefresh={() => {}}
                 />
               </div>
             </div>
