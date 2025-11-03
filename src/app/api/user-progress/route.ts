@@ -129,8 +129,13 @@ export async function POST(request: NextRequest) {
       today
     )
 
-    // Record daily score for graphing
-    await recordDailyScore(session.user.id, roomId, today, pushDistance)
+    // Record daily score for graphing (don't fail if this fails)
+    try {
+      await recordDailyScore(session.user.id, roomId, today, pushDistance)
+    } catch (scoreError) {
+      console.error('Error recording daily score (non-fatal):', scoreError)
+      // Continue execution even if daily score recording fails
+    }
 
     // Get updated progress for all users
     const allProgress = await getAllUserProgressInRoom(roomId)
