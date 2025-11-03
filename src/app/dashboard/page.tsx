@@ -6,6 +6,12 @@ import { useRouter } from 'next/navigation'
 import Calendar from '@/components/Calendar'
 import ScoreGraph from '@/components/ScoreGraph'
 import type { Room, WorkoutRequest, StoneProgress, UserProgress, User, DailyScore } from '@/lib/db'
+import { 
+  Dumbbell, Home, Settings, Calendar as CalendarIcon, BarChart3, 
+  User, Users, Target, ArrowUp, ArrowDown, Plus, FileText,
+  CheckCircle, Clock, Check, X, Zap, Flame, Activity, 
+  TrendingUp, Award
+} from 'lucide-react'
 
 interface UserProgressWithUser extends UserProgress {
   user?: User
@@ -527,7 +533,9 @@ export default function Dashboard() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-          <h1 className="text-4xl font-bold text-white">?? Workout Buddy</h1>
+          <h1 className="text-4xl font-bold text-white flex items-center gap-2">
+            <Dumbbell className="w-8 h-8" /> Workout Buddy
+          </h1>
             <p className="text-slate-400 mt-1">Welcome, {user.name || user.username}!</p>
           </div>
           <button
@@ -542,7 +550,9 @@ export default function Dashboard() {
         {error && (
           <div className="mb-6 p-4 bg-red-600 text-white rounded-lg flex justify-between items-center">
             <p className="font-semibold">{error}</p>
-            <button onClick={() => setError('')} className="text-white hover:text-gray-200">?</button>
+            <button onClick={() => setError('')} className="text-white hover:text-gray-200">
+              <X className="w-5 h-5" />
+            </button>
           </div>
         )}
 
@@ -550,7 +560,7 @@ export default function Dashboard() {
         {!hasRoom && (
           <div className="mb-6 p-6 bg-yellow-900/50 border-2 border-yellow-600 text-yellow-100 rounded-xl">
             <div className="flex items-center gap-3 mb-3">
-              <span className="text-3xl">??</span>
+              <Home className="w-8 h-8 text-yellow-400" />
               <h3 className="text-xl font-bold">No Room Yet</h3>
             </div>
             <p className="mb-4">Create a new room or join an existing one to start your fitness journey!</p>
@@ -717,20 +727,20 @@ export default function Dashboard() {
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                  ?? Room: {room.name}
+                  <Home className="w-6 h-6" /> Room: {room.name}
                 </h2>
-                <p className="text-slate-400 mt-1">
-                  Status: <span className={`font-semibold ${roomActive ? 'text-green-400' : 'text-yellow-400'}`}>
-                    {roomActive ? '?? Active' : '?? Waiting for partner'}
+                <p className="text-slate-400 mt-1 flex items-center gap-2">
+                  Status: <span className={`font-semibold flex items-center gap-1 ${roomActive ? 'text-green-400' : 'text-yellow-400'}`}>
+                    {roomActive ? <><CheckCircle className="w-4 h-4" /> Active</> : <><Clock className="w-4 h-4" /> Waiting for partner</>}
                   </span>
                 </p>
               </div>
               {isCreator && (
                 <button
                   onClick={() => setShowSettings(!showSettings)}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2"
                 >
-                  ?? Settings
+                  <Settings className="w-5 h-5" /> Settings
                 </button>
               )}
             </div>
@@ -849,7 +859,7 @@ export default function Dashboard() {
           <div className="bg-slate-800 rounded-xl p-6 mb-6 shadow-xl">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                ?? Stone Game Progress - Competition
+                <Target className="w-6 h-6" /> Stone Game Progress - Competition
               </h2>
               <div className="flex gap-2">
                 <button
@@ -859,7 +869,7 @@ export default function Dashboard() {
                   }}
                   className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
                 >
-                  ?? Calendar
+                  <CalendarIcon className="w-5 h-5" /> Calendar
                 </button>
                 <button
                   onClick={() => {
@@ -868,7 +878,7 @@ export default function Dashboard() {
                   }}
                   className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2"
                 >
-                  ?? Graph
+                  <BarChart3 className="w-5 h-5" /> Graph
                 </button>
               </div>
             </div>
@@ -884,8 +894,8 @@ export default function Dashboard() {
                 return (
                   <div key={progress.id}>
             <div className="flex justify-between items-center mb-2">
-                      <span className="text-white font-semibold">
-                        {isCurrentUser ? '?? You' : '?? Partner'} 
+                      <span className="text-white font-semibold flex items-center gap-2">
+                        {isCurrentUser ? <><User className="w-4 h-4" /> You</> : <><Users className="w-4 h-4" /> Partner</>}
                         {progress.user && ` (${progress.user.name || progress.user.username})`}
                       </span>
                       <span className="text-white font-bold">{progress.current_position.toFixed(2)}/{stoneProgress.target_position} ({Math.round(progressPercent)}%)</span>
@@ -908,14 +918,14 @@ export default function Dashboard() {
                     </div>
                     {isCurrentUser && progress.remaining_pushes > 0 && (
                       <p className="text-yellow-400 text-sm mt-1">
-                        ?? {progress.remaining_pushes} pushes available!
+                        <Plus className="w-4 h-4 inline" /> {progress.remaining_pushes} pushes available!
                       </p>
                     )}
                   </div>
                 )
               })}
               <div className="mt-2 flex items-center gap-2 text-orange-400">
-                <span>?? {streak} day streak!</span>
+                <span className="flex items-center gap-2"><Flame className="w-5 h-5" /> {streak} day streak!</span>
               </div>
             </div>
 
@@ -929,7 +939,7 @@ export default function Dashboard() {
         {roomActive && userProgress && (
           <div className="bg-slate-800 rounded-xl p-6 mb-6 shadow-xl">
             <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-              ?? Push & Pull Actions
+              <TrendingUp className="w-6 h-6" /> Push & Pull Actions
             </h2>
             
             <div className="grid grid-cols-2 gap-4 mb-4">
@@ -946,7 +956,15 @@ export default function Dashboard() {
                         : 'bg-gray-600 cursor-not-allowed opacity-50'
                   }`}
                 >
-                  {pushAnimation ? '? PUSHING... ?' : '?? Push Yourself'}
+                  {pushAnimation ? (
+                    <span className="flex items-center gap-2">
+                      <ArrowUp className="w-5 h-5 animate-bounce" /> PUSHING... <ArrowUp className="w-5 h-5 animate-bounce" />
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <ArrowUp className="w-5 h-5" /> Push Yourself
+                    </span>
+                  )}
                 </button>
                 <p className="text-slate-400 text-sm text-center">
                   {userProgress.remaining_pushes > 0 
@@ -956,7 +974,7 @@ export default function Dashboard() {
                 {pushAnimation && lastPushScore > 0 && (
                   <div className="text-center">
                     <span className="inline-block text-green-400 font-bold text-xl animate-bounce">
-                      +{lastPushScore.toFixed(2)} ??
+                      +{lastPushScore.toFixed(2)} <ArrowUp className="w-5 h-5 inline" />
                     </span>
                   </div>
                 )}
@@ -973,7 +991,15 @@ export default function Dashboard() {
                       : 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 hover:scale-105 shadow-lg hover:shadow-red-500/50'
                   }`}
                 >
-                  {pullAnimation ? '?? PULLING... ??' : '?? Pull Partner'}
+                  {pullAnimation ? (
+                    <span className="flex items-center gap-2">
+                      <ArrowDown className="w-5 h-5 animate-bounce" /> PULLING... <ArrowDown className="w-5 h-5 animate-bounce" />
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <ArrowDown className="w-5 h-5" /> Pull Partner
+                    </span>
+                  )}
                 </button>
                 <p className="text-slate-400 text-sm text-center">
                   Always available
@@ -981,7 +1007,7 @@ export default function Dashboard() {
                 {pullAnimation && lastPullScore > 0 && (
                   <div className="text-center">
                     <span className="inline-block text-orange-400 font-bold text-xl animate-bounce">
-                      -{lastPullScore.toFixed(2)} ??
+                      -{lastPullScore.toFixed(2)} <ArrowDown className="w-5 h-5 inline" />
                     </span>
                   </div>
                 )}
@@ -998,7 +1024,7 @@ export default function Dashboard() {
         {roomActive && (
         <div className="bg-slate-800 rounded-xl p-6 mb-6 shadow-xl">
           <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-            ?? Log Today's Workout
+            <FileText className="w-6 h-6" /> Log Today's Workout
           </h2>
           
           {!showWorkoutForm ? (
@@ -1022,12 +1048,12 @@ export default function Dashboard() {
                   onChange={(e) => setWorkoutIntensity(Number(e.target.value))}
                   className="w-full"
                 />
-                <div className="text-center text-white mt-2 text-2xl">
-                    {workoutIntensity === 1 && '?? 1 push'}
-                    {workoutIntensity === 2 && '?? 2 pushes'}
-                    {workoutIntensity === 3 && '?? 3 pushes'}
-                    {workoutIntensity === 4 && '?? 4 pushes'}
-                    {workoutIntensity === 5 && '? 5 pushes (Beast mode!)'}
+                  <div className="text-center text-white mt-2 text-2xl flex items-center justify-center gap-2">
+                    {workoutIntensity === 1 && <><Activity className="w-6 h-6" /> 1 push</>}
+                    {workoutIntensity === 2 && <><Activity className="w-6 h-6" /> 2 pushes</>}
+                    {workoutIntensity === 3 && <><Activity className="w-6 h-6" /> 3 pushes</>}
+                    {workoutIntensity === 4 && <><Flame className="w-6 h-6" /> 4 pushes</>}
+                    {workoutIntensity === 5 && <><Zap className="w-6 h-6" /> 5 pushes (Beast mode!)</>}
                   </div>
               </div>
               
@@ -1065,7 +1091,7 @@ export default function Dashboard() {
         {roomActive && pendingApprovals.length > 0 && (
         <div className="bg-slate-800 rounded-xl p-6 mb-6 shadow-xl">
           <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-              ? Partner Requests to Approve
+              <Clock className="w-6 h-6" /> Partner Requests to Approve
           </h2>
             <div className="space-y-3">
               {pendingApprovals.map((req) => (
@@ -1083,25 +1109,25 @@ export default function Dashboard() {
                       )}
                     </div>
                     <span className="text-2xl">
-                      {req.intensity === 1 && '??'}
-                      {req.intensity === 2 && '??'}
-                      {req.intensity === 3 && '??'}
-                      {req.intensity === 4 && '??'}
-                      {req.intensity === 5 && '?'}
+                      {req.intensity === 1 && <Activity className="w-6 h-6" />}
+                      {req.intensity === 2 && <Activity className="w-6 h-6" />}
+                      {req.intensity === 3 && <Activity className="w-6 h-6" />}
+                      {req.intensity === 4 && <Flame className="w-6 h-6" />}
+                      {req.intensity === 5 && <Zap className="w-6 h-6" />}
                     </span>
                   </div>
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleApproveWorkout(req.id, true)}
-                      className="flex-1 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 text-sm"
+                      className="flex-1 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 text-sm flex items-center justify-center gap-2"
                     >
-                      ? Approve
+                      <Check className="w-4 h-4" /> Approve
                     </button>
                     <button
                       onClick={() => handleApproveWorkout(req.id, false)}
-                      className="flex-1 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 text-sm"
+                      className="flex-1 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 text-sm flex items-center justify-center gap-2"
                     >
-                      ? Reject
+                      <X className="w-4 h-4" /> Reject
                     </button>
                   </div>
                 </div>
@@ -1114,7 +1140,7 @@ export default function Dashboard() {
         {roomActive && (
         <div className="bg-slate-800 rounded-xl p-6 shadow-xl">
           <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-            ?? Your Recent Requests
+            <FileText className="w-6 h-6" /> Your Recent Requests
           </h2>
           {requests.length === 0 ? (
             <p className="text-slate-400">No workout requests yet. Log your first workout above!</p>
@@ -1135,9 +1161,11 @@ export default function Dashboard() {
                     req.status === 'rejected' ? 'bg-red-600 text-white' :
                     'bg-yellow-600 text-white'
                   }`}>
-                    {req.status === 'approved' ? '? Approved' :
-                     req.status === 'rejected' ? '? Rejected' :
-                     '? Pending'}
+                    <span className="flex items-center gap-1">
+                      {req.status === 'approved' ? <><Check className="w-4 h-4" /> Approved</> :
+                       req.status === 'rejected' ? <><X className="w-4 h-4" /> Rejected</> :
+                       <><Clock className="w-4 h-4" /> Pending</>}
+                    </span>
                   </span>
                 </div>
               ))}
@@ -1151,7 +1179,9 @@ export default function Dashboard() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 p-4">
             <div className="bg-slate-900 rounded-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
               <div className="sticky top-0 bg-slate-900 border-b border-slate-700 p-6 flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-white">?? Workout Calendar</h2>
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                  <CalendarIcon className="w-6 h-6" /> Workout Calendar
+                </h2>
                 <button
                   onClick={() => setShowCalendar(false)}
                   className="text-gray-400 hover:text-white text-3xl leading-none"
@@ -1177,7 +1207,9 @@ export default function Dashboard() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 p-4">
             <div className="bg-slate-900 rounded-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
               <div className="sticky top-0 bg-slate-900 border-b border-slate-700 p-6 flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-white">?? Progress Graph</h2>
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                  <BarChart3 className="w-6 h-6" /> Progress Graph
+                </h2>
                 <button
                   onClick={() => setShowGraph(false)}
                   className="text-gray-400 hover:text-white text-3xl leading-none"
