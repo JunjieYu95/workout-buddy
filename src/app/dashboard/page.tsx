@@ -397,31 +397,50 @@ export default function Dashboard() {
         body: JSON.stringify({ roomId: room.id }),
       })
       
+      // Check if response is ok before parsing JSON
+      if (!response.ok) {
+        let errorMessage = 'Failed to push'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.error || errorMessage
+        } catch {
+          // If JSON parsing fails, use default error message
+        }
+        setError(errorMessage)
+        setPushAnimation(false)
+        return
+      }
+      
+      // Parse JSON only if response is ok
       const data = await response.json()
       
-      if (response.ok) {
-        setUserProgress(data.userProgress)
-        setStoneProgress(data.stoneProgress)
-        setLastPushScore(data.pushDistance)
-        
-        // Update all progress
-        const progressWithUsers = data.allProgress.map((progress: UserProgress) => ({
-          ...progress,
-          user: members.find((m: User) => m.id === progress.user_id)
-        }))
-        setAllProgress(progressWithUsers)
-        
-        // Show push distance notification
-        setTimeout(() => {
-          setPushAnimation(false)
-        }, 1500)
-      } else {
-        setError(data.error || 'Failed to push')
+      // Verify we have the expected data
+      if (!data.userProgress || !data.stoneProgress) {
+        console.error('Invalid response data:', data)
+        setError('Received invalid response from server')
         setPushAnimation(false)
+        return
       }
+      
+      // Update state with successful response
+      setUserProgress(data.userProgress)
+      setStoneProgress(data.stoneProgress)
+      setLastPushScore(data.pushDistance || 0)
+      
+      // Update all progress
+      const progressWithUsers = (data.allProgress || []).map((progress: UserProgress) => ({
+        ...progress,
+        user: members.find((m: User) => m.id === progress.user_id)
+      }))
+      setAllProgress(progressWithUsers)
+      
+      // Show push distance notification
+      setTimeout(() => {
+        setPushAnimation(false)
+      }, 1500)
     } catch (error) {
       console.error('Error pushing:', error)
-      setError('Failed to push')
+      setError('Failed to push: Network error or server unavailable')
       setPushAnimation(false)
     }
   }
@@ -508,7 +527,7 @@ export default function Dashboard() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-          <h1 className="text-4xl font-bold text-white">💪 Workout Buddy</h1>
+          <h1 className="text-4xl font-bold text-white">?? Workout Buddy</h1>
             <p className="text-slate-400 mt-1">Welcome, {user.name || user.username}!</p>
           </div>
           <button
@@ -523,7 +542,7 @@ export default function Dashboard() {
         {error && (
           <div className="mb-6 p-4 bg-red-600 text-white rounded-lg flex justify-between items-center">
             <p className="font-semibold">{error}</p>
-            <button onClick={() => setError('')} className="text-white hover:text-gray-200">✕</button>
+            <button onClick={() => setError('')} className="text-white hover:text-gray-200">?</button>
           </div>
         )}
 
@@ -531,7 +550,7 @@ export default function Dashboard() {
         {!hasRoom && (
           <div className="mb-6 p-6 bg-yellow-900/50 border-2 border-yellow-600 text-yellow-100 rounded-xl">
             <div className="flex items-center gap-3 mb-3">
-              <span className="text-3xl">🚪</span>
+              <span className="text-3xl">??</span>
               <h3 className="text-xl font-bold">No Room Yet</h3>
             </div>
             <p className="mb-4">Create a new room or join an existing one to start your fitness journey!</p>
@@ -698,11 +717,11 @@ export default function Dashboard() {
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                  🚪 Room: {room.name}
+                  ?? Room: {room.name}
                 </h2>
                 <p className="text-slate-400 mt-1">
                   Status: <span className={`font-semibold ${roomActive ? 'text-green-400' : 'text-yellow-400'}`}>
-                    {roomActive ? '🟢 Active' : '🟡 Waiting for partner'}
+                    {roomActive ? '?? Active' : '?? Waiting for partner'}
                   </span>
                 </p>
               </div>
@@ -711,7 +730,7 @@ export default function Dashboard() {
                   onClick={() => setShowSettings(!showSettings)}
                   className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
                 >
-                  ⚙️ Settings
+                  ?? Settings
                 </button>
               )}
             </div>
@@ -818,7 +837,7 @@ export default function Dashboard() {
             {roomWaiting && (
               <div className="mt-4 p-4 bg-yellow-900/50 border border-yellow-600 rounded-lg">
                 <p className="text-yellow-100">
-                  ⏳ Waiting for a partner to join... Share the room name: <strong>{room.name}</strong>
+                  ? Waiting for a partner to join... Share the room name: <strong>{room.name}</strong>
                 </p>
               </div>
             )}
@@ -830,7 +849,7 @@ export default function Dashboard() {
           <div className="bg-slate-800 rounded-xl p-6 mb-6 shadow-xl">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                🪨 Stone Game Progress - Competition
+                ?? Stone Game Progress - Competition
               </h2>
               <div className="flex gap-2">
                 <button
@@ -840,7 +859,7 @@ export default function Dashboard() {
                   }}
                   className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
                 >
-                  📅 Calendar
+                  ?? Calendar
                 </button>
                 <button
                   onClick={() => {
@@ -849,7 +868,7 @@ export default function Dashboard() {
                   }}
                   className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2"
                 >
-                  📈 Graph
+                  ?? Graph
                 </button>
               </div>
             </div>
@@ -866,7 +885,7 @@ export default function Dashboard() {
                   <div key={progress.id}>
             <div className="flex justify-between items-center mb-2">
                       <span className="text-white font-semibold">
-                        {isCurrentUser ? '👤 You' : '👥 Partner'} 
+                        {isCurrentUser ? '?? You' : '?? Partner'} 
                         {progress.user && ` (${progress.user.name || progress.user.username})`}
                       </span>
                       <span className="text-white font-bold">{progress.current_position.toFixed(2)}/{stoneProgress.target_position} ({Math.round(progressPercent)}%)</span>
@@ -889,19 +908,19 @@ export default function Dashboard() {
                     </div>
                     {isCurrentUser && progress.remaining_pushes > 0 && (
                       <p className="text-yellow-400 text-sm mt-1">
-                        💪 {progress.remaining_pushes} pushes available!
+                        ?? {progress.remaining_pushes} pushes available!
                       </p>
                     )}
                   </div>
                 )
               })}
               <div className="mt-2 flex items-center gap-2 text-orange-400">
-                <span>🔥 {streak} day streak!</span>
+                <span>?? {streak} day streak!</span>
               </div>
             </div>
 
             <p className="text-slate-400 mt-4 text-sm text-center">
-              Each push samples from Gaussian(μ={room.gaussian_mean}, σ={room.gaussian_std}) with consistency bonus
+              Each push samples from Gaussian(?={room.gaussian_mean}, ?={room.gaussian_std}) with consistency bonus
             </p>
           </div>
         )}
@@ -910,7 +929,7 @@ export default function Dashboard() {
         {roomActive && userProgress && (
           <div className="bg-slate-800 rounded-xl p-6 mb-6 shadow-xl">
             <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-              ⚔️ Push & Pull Actions
+              ?? Push & Pull Actions
             </h2>
             
             <div className="grid grid-cols-2 gap-4 mb-4">
@@ -927,7 +946,7 @@ export default function Dashboard() {
                         : 'bg-gray-600 cursor-not-allowed opacity-50'
                   }`}
                 >
-                  {pushAnimation ? '⚡ PUSHING... ⚡' : '💪 Push Yourself'}
+                  {pushAnimation ? '? PUSHING... ?' : '?? Push Yourself'}
                 </button>
                 <p className="text-slate-400 text-sm text-center">
                   {userProgress.remaining_pushes > 0 
@@ -937,7 +956,7 @@ export default function Dashboard() {
                 {pushAnimation && lastPushScore > 0 && (
                   <div className="text-center">
                     <span className="inline-block text-green-400 font-bold text-xl animate-bounce">
-                      +{lastPushScore.toFixed(2)} 🎯
+                      +{lastPushScore.toFixed(2)} ??
                     </span>
                   </div>
                 )}
@@ -954,7 +973,7 @@ export default function Dashboard() {
                       : 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 hover:scale-105 shadow-lg hover:shadow-red-500/50'
                   }`}
                 >
-                  {pullAnimation ? '🔥 PULLING... 🔥' : '🎣 Pull Partner'}
+                  {pullAnimation ? '?? PULLING... ??' : '?? Pull Partner'}
                 </button>
                 <p className="text-slate-400 text-sm text-center">
                   Always available
@@ -962,7 +981,7 @@ export default function Dashboard() {
                 {pullAnimation && lastPullScore > 0 && (
                   <div className="text-center">
                     <span className="inline-block text-orange-400 font-bold text-xl animate-bounce">
-                      -{lastPullScore.toFixed(2)} 🔻
+                      -{lastPullScore.toFixed(2)} ??
                     </span>
                   </div>
                 )}
@@ -970,7 +989,7 @@ export default function Dashboard() {
             </div>
 
             <p className="text-slate-500 text-xs text-center border-t border-slate-700 pt-3">
-              Push: Gaussian(μ={room.gaussian_mean}, σ={room.gaussian_std}) | Pull: {(room.pull_base_percentage * 100)}% of push mean with {room.pull_acceleration_multiplier}x acceleration
+              Push: Gaussian(?={room.gaussian_mean}, ?={room.gaussian_std}) | Pull: {(room.pull_base_percentage * 100)}% of push mean with {room.pull_acceleration_multiplier}x acceleration
             </p>
           </div>
         )}
@@ -979,7 +998,7 @@ export default function Dashboard() {
         {roomActive && (
         <div className="bg-slate-800 rounded-xl p-6 mb-6 shadow-xl">
           <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-            📝 Log Today's Workout
+            ?? Log Today's Workout
           </h2>
           
           {!showWorkoutForm ? (
@@ -1004,11 +1023,11 @@ export default function Dashboard() {
                   className="w-full"
                 />
                 <div className="text-center text-white mt-2 text-2xl">
-                    {workoutIntensity === 1 && '😴 1 push'}
-                    {workoutIntensity === 2 && '🚶 2 pushes'}
-                    {workoutIntensity === 3 && '💪 3 pushes'}
-                    {workoutIntensity === 4 && '🔥 4 pushes'}
-                    {workoutIntensity === 5 && '⚡ 5 pushes (Beast mode!)'}
+                    {workoutIntensity === 1 && '?? 1 push'}
+                    {workoutIntensity === 2 && '?? 2 pushes'}
+                    {workoutIntensity === 3 && '?? 3 pushes'}
+                    {workoutIntensity === 4 && '?? 4 pushes'}
+                    {workoutIntensity === 5 && '? 5 pushes (Beast mode!)'}
                   </div>
               </div>
               
@@ -1046,7 +1065,7 @@ export default function Dashboard() {
         {roomActive && pendingApprovals.length > 0 && (
         <div className="bg-slate-800 rounded-xl p-6 mb-6 shadow-xl">
           <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-              ✅ Partner Requests to Approve
+              ? Partner Requests to Approve
           </h2>
             <div className="space-y-3">
               {pendingApprovals.map((req) => (
@@ -1064,11 +1083,11 @@ export default function Dashboard() {
                       )}
                     </div>
                     <span className="text-2xl">
-                      {req.intensity === 1 && '😴'}
-                      {req.intensity === 2 && '🚶'}
-                      {req.intensity === 3 && '💪'}
-                      {req.intensity === 4 && '🔥'}
-                      {req.intensity === 5 && '⚡'}
+                      {req.intensity === 1 && '??'}
+                      {req.intensity === 2 && '??'}
+                      {req.intensity === 3 && '??'}
+                      {req.intensity === 4 && '??'}
+                      {req.intensity === 5 && '?'}
                     </span>
                   </div>
                   <div className="flex gap-2">
@@ -1076,13 +1095,13 @@ export default function Dashboard() {
                       onClick={() => handleApproveWorkout(req.id, true)}
                       className="flex-1 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 text-sm"
                     >
-                      ✓ Approve
+                      ? Approve
                     </button>
                     <button
                       onClick={() => handleApproveWorkout(req.id, false)}
                       className="flex-1 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 text-sm"
                     >
-                      ✗ Reject
+                      ? Reject
                     </button>
                   </div>
                 </div>
@@ -1095,7 +1114,7 @@ export default function Dashboard() {
         {roomActive && (
         <div className="bg-slate-800 rounded-xl p-6 shadow-xl">
           <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-            📋 Your Recent Requests
+            ?? Your Recent Requests
           </h2>
           {requests.length === 0 ? (
             <p className="text-slate-400">No workout requests yet. Log your first workout above!</p>
@@ -1116,9 +1135,9 @@ export default function Dashboard() {
                     req.status === 'rejected' ? 'bg-red-600 text-white' :
                     'bg-yellow-600 text-white'
                   }`}>
-                    {req.status === 'approved' ? '✓ Approved' :
-                     req.status === 'rejected' ? '✗ Rejected' :
-                     '⏳ Pending'}
+                    {req.status === 'approved' ? '? Approved' :
+                     req.status === 'rejected' ? '? Rejected' :
+                     '? Pending'}
                   </span>
                 </div>
               ))}
@@ -1132,7 +1151,7 @@ export default function Dashboard() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 p-4">
             <div className="bg-slate-900 rounded-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
               <div className="sticky top-0 bg-slate-900 border-b border-slate-700 p-6 flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-white">📅 Workout Calendar</h2>
+                <h2 className="text-2xl font-bold text-white">?? Workout Calendar</h2>
                 <button
                   onClick={() => setShowCalendar(false)}
                   className="text-gray-400 hover:text-white text-3xl leading-none"
@@ -1158,7 +1177,7 @@ export default function Dashboard() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 p-4">
             <div className="bg-slate-900 rounded-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
               <div className="sticky top-0 bg-slate-900 border-b border-slate-700 p-6 flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-white">📈 Progress Graph</h2>
+                <h2 className="text-2xl font-bold text-white">?? Progress Graph</h2>
                 <button
                   onClick={() => setShowGraph(false)}
                   className="text-gray-400 hover:text-white text-3xl leading-none"
