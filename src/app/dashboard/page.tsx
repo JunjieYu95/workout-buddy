@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import Calendar from '@/components/Calendar'
 import ScoreGraph from '@/components/ScoreGraph'
-import type { Room, WorkoutRequest, StoneProgress, UserProgress, User, DailyScore } from '@/lib/db'
+import type { Room, WorkoutRequest, StoneProgress, UserProgress, User, ScoreTimelinePoint } from '@/lib/db'
 
 interface UserProgressWithUser extends UserProgress {
   user?: User
@@ -38,7 +38,7 @@ export default function Dashboard() {
   const [error, setError] = useState('')
   
   // Graph data
-  const [dailyScores, setDailyScores] = useState<DailyScore[]>([])
+  const [dailyScores, setDailyScores] = useState<ScoreTimelinePoint[]>([])
   
   // Calendar data
   const [calendarWorkouts, setCalendarWorkouts] = useState<WorkoutRequest[]>([])

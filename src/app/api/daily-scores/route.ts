@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { getDailyScoresByRoom } from '@/lib/db'
+import { getScoreTimelineByRoom } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Room ID required' }, { status: 400 })
     }
 
-    const scores = await getDailyScoresByRoom(roomId)
+    const scores = await getScoreTimelineByRoom(roomId)
     
     // Format dates to ensure consistent date-only format
     const formattedScores = scores.map((score) => ({
