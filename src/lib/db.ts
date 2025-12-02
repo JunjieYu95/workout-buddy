@@ -102,6 +102,14 @@ export interface DailyScore {
   updated_at: Date
 }
 
+export interface ScoreTimelinePoint {
+  user_id: string
+  room_id: string
+  score_date: Date
+  daily_score: number
+  cumulative_score: number
+}
+
 // Database utility functions
 export async function query(text: string, params?: any[]): Promise<any> {
   const pool = getPool()
@@ -437,6 +445,55 @@ export async function recordDailyScore(
 export async function getDailyScoresByRoom(roomId: string): Promise<DailyScore[]> {
   const result = await query(
     'SELECT * FROM daily_scores WHERE room_id = $1 ORDER BY score_date ASC',
+    [roomId]
+  )
+  return result.rows
+}
+
+export async function getScoreTimelineByRoom(roomId: string): Promise<ScoreTimelinePoint[]> {
+  const result = await query(
+    `
+      WITH members AS (
+        SELECT user_id
+        FROM room_members
+        WHERE room_id = $1
+      ),
+      bounds AS (
+        SELECT 
+          COALESCE(MIN(score_date), CURRENT_DATE) AS min_date,
+          GREATEST(COALESCE(MAX(score_date), CURRENT_DATE), CURRENT_DATE) AS max_date
+        FROM daily_scores
+        WHERE room_id = $1
+      ),
+      series AS (
+        SELECT generate_series(bounds.min_date, bounds.max_date, interval '1 day')::date AS score_date
+        FROM bounds
+      ),
+      base AS (
+        SELECT s.score_date, m.user_id
+        FROM series s
+        CROSS JOIN members m
+      ),
+      scores AS (
+        SELECT user_id, score_date, score
+        FROM daily_scores
+        WHERE room_id = $1
+      )
+      SELECT 
+        b.user_id,
+        $1::uuid AS room_id,
+        b.score_date,
+        COALESCE(s.score, 0) AS daily_score,
+        SUM(COALESCE(s.score, 0)) OVER (
+          PARTITION BY b.user_id 
+          ORDER BY b.score_date
+        ) AS cumulative_score
+      FROM base b
+      LEFT JOIN scores s 
+        ON s.user_id = b.user_id 
+       AND s.score_date = b.score_date
+      ORDER BY b.score_date ASC, b.user_id ASC
+    `,
     [roomId]
   )
   return result.rows

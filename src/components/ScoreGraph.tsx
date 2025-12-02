@@ -2,10 +2,10 @@
 
 import { useMemo } from 'react'
 import { format, parseISO } from 'date-fns'
-import { DailyScore } from '@/lib/db'
+import type { ScoreTimelinePoint } from '@/lib/db'
 
 interface ScoreGraphProps {
-  scores: DailyScore[]
+  scores: ScoreTimelinePoint[]
   userId: string
   partnerId?: string
   userName?: string
@@ -13,57 +13,48 @@ interface ScoreGraphProps {
 }
 
 export default function ScoreGraph({ scores, userId, partnerId, userName, partnerName }: ScoreGraphProps) {
-  // Group scores by user and date
-  const { userScores, partnerScores, allDates, maxScore } = useMemo(() => {
-    const userScoresMap = new Map<string, number>()
-    const partnerScoresMap = new Map<string, number>()
+  // Prepare timeline maps for each user
+  const { userScores, partnerScores, allDates, maxScore, hasData } = useMemo(() => {
     const datesSet = new Set<string>()
+    const perUserTimeline = new Map<string, Map<string, number>>()
     let max = 0
+    let hasData = false
 
-    scores.forEach(score => {
-      const dateStr = typeof score.score_date === 'string' 
-        ? score.score_date 
-        : score.score_date.toISOString().split('T')[0]
-      
+    scores.forEach(point => {
+      const dateStr = typeof point.score_date === 'string'
+        ? point.score_date
+        : point.score_date.toISOString().split('T')[0]
+
       datesSet.add(dateStr)
-      
-      if (score.user_id === userId) {
-        const current = userScoresMap.get(dateStr) || 0
-        const newScore = current + score.score
-        userScoresMap.set(dateStr, newScore)
-        max = Math.max(max, newScore)
-      } else if (partnerId && score.user_id === partnerId) {
-        const current = partnerScoresMap.get(dateStr) || 0
-        const newScore = current + score.score
-        partnerScoresMap.set(dateStr, newScore)
-        max = Math.max(max, newScore)
+
+      const userMap = perUserTimeline.get(point.user_id) ?? new Map<string, number>()
+      const cumulativeScore = point.cumulative_score ?? 0
+      userMap.set(dateStr, cumulativeScore)
+      perUserTimeline.set(point.user_id, userMap)
+
+      if ((point.daily_score ?? 0) !== 0) {
+        hasData = true
       }
+      max = Math.max(max, cumulativeScore)
     })
 
     const sortedDates = Array.from(datesSet).sort()
 
-    // Calculate cumulative scores
-    const userCumulative = new Map<string, number>()
-    const partnerCumulative = new Map<string, number>()
-    let userSum = 0
-    let partnerSum = 0
-
-    sortedDates.forEach(date => {
-      userSum += userScoresMap.get(date) || 0
-      partnerSum += partnerScoresMap.get(date) || 0
-      userCumulative.set(date, userSum)
-      partnerCumulative.set(date, partnerSum)
-    })
+    const getTimeline = (id?: string) => {
+      if (!id) return new Map<string, number>()
+      return perUserTimeline.get(id) ?? new Map<string, number>()
+    }
 
     return {
-      userScores: userCumulative,
-      partnerScores: partnerCumulative,
+      userScores: getTimeline(userId),
+      partnerScores: getTimeline(partnerId),
       allDates: sortedDates,
-      maxScore: Math.max(userSum, partnerSum)
+      maxScore: max,
+      hasData
     }
   }, [scores, userId, partnerId])
 
-  if (allDates.length === 0) {
+  if (!hasData || allDates.length === 0) {
     return (
       <div className="bg-slate-800 rounded-lg p-6 text-center">
         <p className="text-slate-400">No score data available yet. Start pushing to see your progress!</p>
@@ -84,8 +75,8 @@ export default function ScoreGraph({ scores, userId, partnerId, userName, partne
 
   // Generate path for line chart
   const generatePath = (scoresMap: Map<string, number>) => {
-    if (scoresMap.size === 0) return ''
-    
+    if (allDates.length === 0) return ''
+
     return allDates
       .map((date, index) => {
         const score = scoresMap.get(date) || 0
